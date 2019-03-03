@@ -1,0 +1,11 @@
+{
+    "compilerOptions": {
+      "target": "es6",
+      "module": "amd",
+      "outFile": "dist/main.js",
+      "sourceMap": false
+    },
+    "include": [
+      "src/**/*.ts"
+    ]
+  }
