@@ -1,3 +1,8 @@
+import { Coords } from "../objects/coords";
+import { DrawContext } from "./game-loop-service";
+import { Rect } from "../objects/rect";
+import { ArrayAnimator } from "../animators";
+
 class SpriteCategory {
     width: number;
     height: number;
@@ -12,7 +17,7 @@ class SpriteCategory {
         let x = xStart;
         let y = yStart;
         const framesDictionary: {[key: string]: SpriteFrame} = {};
-        for(const name in frames.split(',')) {
+        for(const name of frames.split(',')) {
             if (x + width > spriteSheetWidth) {
                 x = 0;
                 y += height;
@@ -46,10 +51,19 @@ class SpriteAnimation {
         this.loop = loop;
         this.frames = frames.split(',').map(x => [category, x].join(':'));
     }
+
+    toAnimator(): ArrayAnimator<string> {
+        return new ArrayAnimator<string>(this.frames, this.loop);
+    }
 }
 
 export class SpriteService {
-    private static _spritesFile = '8ffee8c7516d79fc215f81cc47b54126.png';
+    private static _sprites = (() => {
+        const img = new Image();
+        img.src = '8ffee8c7516d79fc215f81cc47b54126.png';
+        return img;
+    })();
+
     private static _categories: {[key: string]: SpriteCategory} = {
         'door': new SpriteCategory(0,0,32,32,128,'closed,o0,o1,o2,o3,o4,o5,o6,o7,o8,o9,open,c1,c2'),
         'flower': new SpriteCategory(64,96,16,32,128,
@@ -66,8 +80,8 @@ export class SpriteService {
                 'w,w0,w1,w2,w3', 'sw,sw0,sw1,sw2,sw3'
             ].join(',')),
         'girl-attack-1': new SpriteCategory(64,480,64,32,128,'00,01,02,03'),
-        'glimmer-m': new SpriteCategory(64,544,16,24,128,'m'),
-        'glimmer-s': new SpriteCategory(80,544,8,16,128,'s'),
+        'glimmer-m': new SpriteCategory(64,544,16,24,128,'00'),
+        'glimmer-s': new SpriteCategory(80,544,8,16,128,'00'),
         'poop': new SpriteCategory(0,576,88,88,128,'00')
     }
 
@@ -86,12 +100,51 @@ export class SpriteService {
         'girl-walking-sw': new SpriteAnimation('girl', 'sw,sw0,sw1,sw,sw2,sw3', true),
         'girl-attacking-1': new SpriteAnimation('girl-attack-1', '00,01,02,03,00', false),
     }
+
+    drawSprite(context: DrawContext, key: string, location: Coords) {
+
+        const sprite = this.getSprite(key);
+        if (sprite == null) {
+            return;
+        }
+
+        if (!context.isVisible(new Rect(location.x, location.y, sprite.rect.width, sprite.rect.height))) {
+            return;
+        }
+
+        const drawLoc = context.translate(location);
+
+        
+        context.canvas.drawImage(SpriteService._sprites, 
+            sprite.rect.x, sprite.rect.y, sprite.rect.width, sprite.rect.height,
+            drawLoc.x, drawLoc.y, sprite.rect.width, sprite.rect.height);
+    }
+
+    public getSprite(key: string): SpriteInfo {
+        const keyParts = key.split(':');
+        if (!SpriteService._categories[keyParts[0]] || !SpriteService._categories[keyParts[0]].frames[keyParts[1]]) {
+            return null;
+        }
+
+        const category = SpriteService._categories[keyParts[0]];
+        const frame = category.frames[keyParts[1]];
+
+        return {
+            name: key,
+            rect: new Rect(frame.x, frame.y, category.width, category.height)
+        };
+    }
+
+    public getAnimator(key: string): ArrayAnimator<string> {
+        if (SpriteService._animations[key]) {
+            return SpriteService._animations[key].toAnimator();
+        }
+
+        return null;
+    }
 }
 
 export class SpriteInfo {
     name: string;
-    x: number;
-    y: number;
-    width: number;
-    height: number;
+    rect: Rect;
 }

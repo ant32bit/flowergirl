@@ -13,7 +13,7 @@ def make_root_files(env):
     root_template = 'root-template/'
     www_root = env + 'www-root/'
 
-    main_js = env + 'main.js'
+    main_js = env + 'bundle.js'
     index_html = 'index.html'
 
     if os.path.exists(www_root):
