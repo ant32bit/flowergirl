@@ -1,4 +1,4 @@
-import { ServiceProvider } from "./services/service-provider";
+import { ServiceProvider } from "./services";
 import { World } from "./objects/world";
 
 const serviceProvider: ServiceProvider = new ServiceProvider();

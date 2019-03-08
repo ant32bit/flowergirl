@@ -1,6 +1,5 @@
-import { Coords } from "../objects/coords";
+import { Coords, Rect } from "../locators";
 import { DrawContext } from "./game-loop-service";
-import { Rect } from "../objects/rect";
 import { ArrayAnimator } from "../animators";
 
 class SpriteCategory {
@@ -31,6 +30,14 @@ class SpriteCategory {
         this.height = height;
         this.frames = framesDictionary;
     }
+
+    mergeWith(cat2: SpriteCategory): SpriteCategory {
+        for (const key of Object.keys(cat2.frames)) {
+            this.frames[key] = cat2.frames[key];
+        }
+
+        return this;
+    }
 }
 
 class SpriteFrame {
@@ -60,39 +67,50 @@ class SpriteAnimation {
 export class SpriteService {
     private static _sprites = (() => {
         const img = new Image();
-        img.src = '8ffee8c7516d79fc215f81cc47b54126.png';
+        img.src = 'a74515aaed866438a991807435b8e675.png';
         return img;
     })();
 
     private static _categories: {[key: string]: SpriteCategory} = {
-        'door': new SpriteCategory(0,0,32,32,128,'closed,o0,o1,o2,o3,o4,o5,o6,o7,o8,o9,open,c1,c2'),
-        'flower': new SpriteCategory(64,96,16,32,128,
+        'girl': new SpriteCategory(0,0,32,32,256,
             [
-                'b0,b1,b2,b3', 
-                'd0,d1,d2,daisy', 'daisy-dead,daisy-dead-float',
-                'r0,r1,r2,rose', 'rose-dead,rose-dead-float'
+                's0,s1,s,s2,s3', 'se0,se1,se,se2,se3',
+                'e0,e1,e,e2,e3', 'ne0,ne1,ne,ne2,ne3',
+                'n0,n1,n,n2,n3', 'nw0,nw1,nw,nw2,nw3',
+                'w0,w1,w,w2,w3', 'sw0,sw1,sw,sw2,sw3'
             ].join(',')),
-        'girl': new SpriteCategory(64,160,32,32,128,
-            [
-                's,s0,s1,s2,s3', 'se,se0,se1,se2,se3',
-                'e,e0,e1,e2,e3', 'ne,ne0,ne1,ne2,ne3',
-                'n,n0,n1,n2,n3', 'nw,nw0,nw1,nw2,nw3',
-                'w,w0,w1,w2,w3', 'sw,sw0,sw1,sw2,sw3'
-            ].join(',')),
-        'girl-attack-1': new SpriteCategory(64,480,64,32,128,'00,01,02,03'),
-        'glimmer-m': new SpriteCategory(64,544,16,24,128,'00'),
-        'glimmer-s': new SpriteCategory(80,544,8,16,128,'00'),
-        'poop': new SpriteCategory(0,576,88,88,128,'00')
+        'girl-attack-1': new SpriteCategory(0,160,64,32,256,'00,01,02,03'),
+        'flower': new SpriteCategory(0,192,16,32,256,[
+            'b0,b1,b2,b3', 
+            'db0,db1,db2,daisy,d0,d1', 'daisy-dead,daisy-dead-float',
+            'rb0,rb1,rb2,rose,r0,r1', 'rose-dead,rose-dead-float'
+        ].join(',')),
+        'steam-1': new SpriteCategory(64,224,20,20,256,'00,01,02,03,04,05,06'),
+        'steam-2': 
+            new SpriteCategory(204,224,32,20,256,'00').mergeWith(
+            new SpriteCategory(0,256,32,20,256,'01,02,03,04')),
+        'glimmer-m': new SpriteCategory(128,256,13,21,256,'00'),
+        'glimmer-s': new SpriteCategory(141,256,7,13,256,'00'),
+        'blast-door': new SpriteCategory(148,256,48,24,256,'closed,01,02,03,04,05,06,07,08,open'),
+        'room': new SpriteCategory(144,304,37,25,256,'00'),
+        'door': new SpriteCategory(181,304,52,54,256,'closed,00,01,02,03,04,05,06,07,08,09,open'),
+        'poop': new SpriteCategory(156,466,86,77,256,'00')
     }
 
     private static _animations: {[key: string]: SpriteAnimation} = {
-        'door-opening': new SpriteAnimation('door', 'o0,o1,o2,o3,o4,o5,o6,o7,o8,o9,open', false),
-        'door-closing': new SpriteAnimation('door', 'c1,c2,c2,o2,o1,closed', false),
-        'daisy-blooming': new SpriteAnimation('flower', 'b0,b1,b2,b3,d0,d1,d2,daisy', false),
-        'rose-blooming': new SpriteAnimation('flower', 'b0,b1,b2,b3,r0,r1,r2,rose', false),
+        'door-opening': new SpriteAnimation('door', '00,01,02,02,02,02,03,04,05,06,07,08,09,open', false),
+        'door-closing': new SpriteAnimation('door', '09,07,02,02,02,01,00,closed', false),
+        'blast-door-opening': new SpriteAnimation('blast-door', '01,02,03,04,05,06,07,08,open', false),
+        'blast-door-closing': new SpriteAnimation('blast-door', '06,03,closed', false),
+        'daisy-blooming': new SpriteAnimation('flower', 'b0,b1,b2,b3,db0,db1,db2,daisy', false),
+        'daisy': new SpriteAnimation('flower', 'daisy,daisy,d0,d0,daisy,daisy,d1,d1', true),
+        'rose-blooming': new SpriteAnimation('flower', 'b0,b1,b2,b3,rb0,rb1,rb2,rose', false),
+        'rose': new SpriteAnimation('flower', 'rose,rose,r0,r0,rose,rose,r1,r1', true),
+        'steam-1': new SpriteAnimation('steam-1', '00,01,02,03,04,05,06', false),
+        'steam-2': new SpriteAnimation('steam-2', '00,01,02,03,04', false),
         'girl-walking-s': new SpriteAnimation('girl', 's,s0,s1,s,s2,s3', true),
         'girl-walking-se': new SpriteAnimation('girl', 'se,se0,se1,se,se2,se3', true),
-        'girl-walking-e': new SpriteAnimation('girl', 's,s0,s1,s,s2,s3', true),
+        'girl-walking-e': new SpriteAnimation('girl', 'e,e0,e1,e,e2,e3', true),
         'girl-walking-ne': new SpriteAnimation('girl', 'ne,ne0,ne1,ne,ne2,ne3', true),
         'girl-walking-n': new SpriteAnimation('girl', 'n,n0,n1,n,n2,n3', true),
         'girl-walking-nw': new SpriteAnimation('girl', 'nw,nw0,nw1,nw,nw2,nw3', true),
@@ -121,6 +139,10 @@ export class SpriteService {
     }
 
     public getSprite(key: string): SpriteInfo {
+        if (key == null) {
+            return null;
+        }
+
         const keyParts = key.split(':');
         if (!SpriteService._categories[keyParts[0]] || !SpriteService._categories[keyParts[0]].frames[keyParts[1]]) {
             return null;

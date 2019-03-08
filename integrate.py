@@ -8,6 +8,10 @@ def get_file_hash(filename):
         c = fh.read()
         return md5(c).hexdigest()
 
+def get_extension(filename):
+    _, ext = os.path.splitext(filename)
+    return ext
+
 def make_root_files(env):
     env = os.path.dirname(env + '/') + '/'
     root_template = 'root-template/'
@@ -25,16 +29,20 @@ def make_root_files(env):
 
     shutil.copyfile(main_js, www_root + new_main_js)
 
+    other_files = {}
+
+    for file in os.listdir(root_template):
+        if file != index_html:
+            new_file = get_file_hash(root_template + file) + get_extension(file)
+            shutil.copyfile(root_template + file, www_root + new_file)
+            other_files[file] = new_file
+
     with open(root_template + index_html) as fh:
         index_html_content = fh.read()
     
     with open(www_root + index_html, 'w') as fh:
         fh.write(index_html_content.replace('{{main.js}}', new_main_js))
     
-    for file in os.listdir(root_template):
-        if file != index_html:
-            shutil.copyfile(root_template + file, www_root + file)
-
 if __name__ == "__main__":
     make_root_files('dist/')
     

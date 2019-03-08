@@ -1,10 +1,10 @@
-import { Coords } from "../objects/coords";
-import { Rect } from "../objects/rect";
+import { Coords, Rect } from "../locators";
 
 export class GameLoopService {
     
     private static _fps = 8;
-    private static _mspf = 1000 / GameLoopService._fps
+    private static _mspf = 1000 / GameLoopService._fps;
+
     private _frameFn: (callback: () => void) => void;
     private _started: boolean = false;
     private _renderts: number = 0;
