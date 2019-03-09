@@ -58,6 +58,14 @@ export class Path {
         }
     }
 
+    public then(path: Path): Path {
+        if (path._currLocation.equals(this._destination)) {
+            this._segments.push(...path._segments);
+        }
+
+        return this;
+    }
+
     private _getNewLocation(distance: number): number {
         if (this._segments.length === 0) {
             return 0;

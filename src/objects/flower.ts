@@ -3,49 +3,84 @@ import { ArrayAnimator } from "../animators";
 import { ServiceProvider, DrawContext } from "../services";
 
 const serviceProvider = new ServiceProvider();
-export type FlowerState = 'blooming' | 'alive' | 'dead' | 'hit'
+export type FlowerState = 'blooming' | 'alive' | 'dead' | 'gone'
 
 export class Flower {
     public type: string;
     public location: Coords;
     public state: FlowerState;
 
-    private _bloomAnimator: ArrayAnimator<string>;
-    private _bloom: string;
-    private _sprite: string;
+    private _bloom: ArrayAnimator<string>;
+    private _alive: ArrayAnimator<string>;
     private _dead: string;
-    private _deadFloat: string;
+    private _hit: string;
+
+    private static _deathDuration = 16;
+    private static _hitDuration = 2;
+    private _timeOfDeath?: number = null;
+    private _timeOfHit?: number = null;
+    private _currTime: number = 0;
 
     constructor(location: Coords) {
         this.location = new Coords(location.x - 8, location.y - 29);
         this.type = ['daisy', 'rose'][Math.floor(Math.random() * 2)];
         this.state = 'blooming';
 
-        this._bloomAnimator = serviceProvider.SpriteService.getAnimator(this.type + '-blooming');
-        this._bloom = 'flower:b0';
-        this._sprite = `flower:${this.type}`;
+        this._bloom = serviceProvider.SpriteService.getAnimator(this.type + '-blooming');
+        this._alive = serviceProvider.SpriteService.getAnimator(this.type);
         this._dead = `flower:${this.type}-dead`;
-        this._deadFloat = `flower:${this.type}-dead-float`;
+        this._hit = `flower:${this.type}-dead-float`;
 
         console.log(this);
     }
 
     update(ticks: number) {
-        if (this.state === 'blooming') {
-            this._bloom = this._bloomAnimator.next(ticks);
+        this._currTime += ticks;
 
-            if (this._bloomAnimator.finished()) {
+        if (this.state === 'blooming') {
+            this._bloom.next(ticks);
+
+            if (this._bloom.finished()) {
                 this.state = 'alive';
             }
+        }
+        else if (this.state === 'alive') {
+            this._alive.next(ticks);
+        }
+
+        if (this.state === 'dead' && this._currTime - this._timeOfDeath > Flower._deathDuration) {
+            this.state = 'gone';
+        }
+
+        if (this._timeOfHit != null && this._currTime - this._timeOfHit > Flower._hitDuration) {
+            this._timeOfHit = null;
+        }
+    }
+
+    hit() {
+        if (this.state !== 'gone')
+            this.state = 'dead';
+
+        this._timeOfHit = this._currTime;
+        if (this._timeOfDeath == null) {
+            this._timeOfDeath = this._currTime;
         }
     }
 
     draw(context: DrawContext) {
         if (this.state === 'blooming') {
-            serviceProvider.SpriteService.drawSprite(context, this._bloom, this.location)
+            serviceProvider.SpriteService.drawSprite(context, this._bloom.value(), this.location)
         }
         else if (this.state === 'alive') {
-            serviceProvider.SpriteService.drawSprite(context, this._sprite, this.location);
+            serviceProvider.SpriteService.drawSprite(context, this._alive.value(), this.location);
+        }
+        else if (this.state === 'dead') {
+            if (this._timeOfHit != null) {
+                serviceProvider.SpriteService.drawSprite(context, this._hit, this.location);
+            }
+            else {
+                serviceProvider.SpriteService.drawSprite(context, this._dead, this.location);
+            }
         }
     }
 }

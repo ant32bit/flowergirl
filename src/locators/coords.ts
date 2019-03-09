@@ -20,5 +20,9 @@ export class Coords {
     move(deltaX: number, deltaY: number): Coords {
         return new Coords(this.x + deltaX, this.y + deltaY);
     }
+
+    equals(coordB: Coords): boolean {
+        return this.x === coordB.x && this.y === coordB.y;
+    }
 }
 

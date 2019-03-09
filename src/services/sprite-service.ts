@@ -56,7 +56,26 @@ class SpriteAnimation {
 
     constructor(category: string, frames: string, loop: boolean = true) {
         this.loop = loop;
-        this.frames = frames.split(',').map(x => [category, x].join(':'));
+        const framesComponents = frames.split(':');
+        let frameCount: number;
+        let frameIds: string[];
+
+        if (framesComponents.length === 2) {
+            frameCount = parseInt(framesComponents[0]);
+            frameIds = framesComponents[1].split(',');
+        }
+        else {
+            frameCount = 1;
+            frameIds = frames.split(',');
+        }
+
+        const animationFrames: string[] = [];
+        for(const frameId of frameIds) {
+            for(let i = 0; i < frameCount; i++) {
+                animationFrames.push([category, frameId].join(':'));
+            }
+        }
+        this.frames = animationFrames;
     }
 
     toAnimator(): ArrayAnimator<string> {
@@ -67,7 +86,7 @@ class SpriteAnimation {
 export class SpriteService {
     private static _sprites = (() => {
         const img = new Image();
-        img.src = 'a74515aaed866438a991807435b8e675.png';
+        img.src = 'e26324170cc81f843ebcab81f7646de8.png';
         return img;
     })();
 
@@ -79,7 +98,7 @@ export class SpriteService {
                 'n0,n1,n,n2,n3', 'nw0,nw1,nw,nw2,nw3',
                 'w0,w1,w,w2,w3', 'sw0,sw1,sw,sw2,sw3'
             ].join(',')),
-        'girl-attack-1': new SpriteCategory(0,160,64,32,256,'00,01,02,03'),
+        'girl-attack-1': new SpriteCategory(0,160,64,32,256,'00,01,02,hit'),
         'flower': new SpriteCategory(0,192,16,32,256,[
             'b0,b1,b2,b3', 
             'db0,db1,db2,daisy,d0,d1', 'daisy-dead,daisy-dead-float',
@@ -99,24 +118,24 @@ export class SpriteService {
 
     private static _animations: {[key: string]: SpriteAnimation} = {
         'door-opening': new SpriteAnimation('door', '00,01,02,02,02,02,03,04,05,06,07,08,09,open', false),
-        'door-closing': new SpriteAnimation('door', '09,07,02,02,02,01,00,closed', false),
+        'door-closing': new SpriteAnimation('door', '09,07,03,02,02,02,01,00,closed', false),
         'blast-door-opening': new SpriteAnimation('blast-door', '01,02,03,04,05,06,07,08,open', false),
         'blast-door-closing': new SpriteAnimation('blast-door', '06,03,closed', false),
         'daisy-blooming': new SpriteAnimation('flower', 'b0,b1,b2,b3,db0,db1,db2,daisy', false),
-        'daisy': new SpriteAnimation('flower', 'daisy,daisy,d0,d0,daisy,daisy,d1,d1', true),
+        'daisy': new SpriteAnimation('flower', '2:daisy,d0,daisy,d1', true),
         'rose-blooming': new SpriteAnimation('flower', 'b0,b1,b2,b3,rb0,rb1,rb2,rose', false),
-        'rose': new SpriteAnimation('flower', 'rose,rose,r0,r0,rose,rose,r1,r1', true),
+        'rose': new SpriteAnimation('flower', '2:rose,r0,rose,r1', true),
         'steam-1': new SpriteAnimation('steam-1', '00,01,02,03,04,05,06', false),
         'steam-2': new SpriteAnimation('steam-2', '00,01,02,03,04', false),
-        'girl-walking-s': new SpriteAnimation('girl', 's,s0,s1,s,s2,s3', true),
-        'girl-walking-se': new SpriteAnimation('girl', 'se,se0,se1,se,se2,se3', true),
-        'girl-walking-e': new SpriteAnimation('girl', 'e,e0,e1,e,e2,e3', true),
-        'girl-walking-ne': new SpriteAnimation('girl', 'ne,ne0,ne1,ne,ne2,ne3', true),
-        'girl-walking-n': new SpriteAnimation('girl', 'n,n0,n1,n,n2,n3', true),
-        'girl-walking-nw': new SpriteAnimation('girl', 'nw,nw0,nw1,nw,nw2,nw3', true),
-        'girl-walking-w': new SpriteAnimation('girl', 'w,w0,w1,w,w2,w3', true),
-        'girl-walking-sw': new SpriteAnimation('girl', 'sw,sw0,sw1,sw,sw2,sw3', true),
-        'girl-attacking-1': new SpriteAnimation('girl-attack-1', '00,01,02,03,00', false),
+        'girl-walking-s': new SpriteAnimation('girl', '2:s,s0,s1,s,s2,s3', true),
+        'girl-walking-se': new SpriteAnimation('girl', '2:se,se0,se1,se,se2,se3', true),
+        'girl-walking-e': new SpriteAnimation('girl', '2:e,e0,e1,e,e2,e3', true),
+        'girl-walking-ne': new SpriteAnimation('girl', '2:ne,ne0,ne1,ne,ne2,ne3', true),
+        'girl-walking-n': new SpriteAnimation('girl', '2:n,n0,n1,n,n2,n3', true),
+        'girl-walking-nw': new SpriteAnimation('girl', '2:nw,nw0,nw1,nw,nw2,nw3', true),
+        'girl-walking-w': new SpriteAnimation('girl', '2:w,w0,w1,w,w2,w3', true),
+        'girl-walking-sw': new SpriteAnimation('girl', '2:sw,sw0,sw1,sw,sw2,sw3', true),
+        'girl-attacking-1': new SpriteAnimation('girl-attack-1', '00,01,02,hit,00', true),
     }
 
     drawSprite(context: DrawContext, key: string, location: Coords) {

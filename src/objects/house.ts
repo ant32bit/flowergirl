@@ -6,7 +6,7 @@ import { SequenceAnimator } from "../animators/sequence-animator";
 
 
 export class House {
-    public static boundingRect: Rect = new Rect(-44, 4, 88, 40);
+    public static boundingRect: Rect = new Rect(-44, -11, 88, 40);
 
     private _poopLocation = new Coords(-42, -55);
     private _doorLocation = new Coords(-27, -27);
@@ -37,8 +37,8 @@ export class House {
         ])
         
         this._doorClosingAnimator = new SequenceAnimator([
-            { name: 'door', atTick: 0, begin: spriteService.getAnimator('door-closing'), before: 'door:open', after: 'door:closed' },
-            { name: 'blastdoor', atTick: 0, begin: spriteService.getAnimator('blast-door-closing'), before: 'blast-door:open', after: 'blast-door:closed'}
+            { name: 'blastdoor', atTick: 0, begin: spriteService.getAnimator('blast-door-closing'), before: 'blast-door:open', after: 'blast-door:closed'},
+            { name: 'door', atTick: 3, begin: spriteService.getAnimator('door-closing'), before: 'door:open', after: 'door:closed' }
         ]);
     }
 

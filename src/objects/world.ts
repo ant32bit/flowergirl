@@ -25,30 +25,36 @@ export class World {
     }
     
     private update(context: UpdateContext) {
+        this._removeGoneFlowers();
+
         const ticks = context.tick - this._currTick;
         this._currTick = context.tick;
 
         this._house.update(ticks);
         if (this._house.door === 'closed' && this._flowerTick > 0 && this._currTick - this._flowerTick > 8) {
+            this._girl = new Girl();
             this._house.openDoor();
         }
 
         if (this._house.door === 'open') {
-            if (this._girl) {
-                if (this._girl.state === 'waiting') { 
-
-                    const target = this._getRandomFlower();
-                    if (target) {
-                        this._girl.target = target;
-                    }
-                    else {
-                        this._girl.goHome();
-                    }
+            if (this._girl.state === 'home') {
+                if (this._hasFlowers()) {
+                    this._girl.target = this._getRandomFlower();
                 }
-                this._girl.update(ticks);
+                else {
+                    this._house.closeDoor();
+                }
             }
-            else { 
-                this._girl = new Girl();
+            else if (this._girl.state === 'waiting') {
+                if (this._hasFlowers()) {
+                    this._girl.target = this._getRandomFlower();
+                }
+                else {
+                    this._girl.goHome();
+                }
+            }
+            else {
+                this._girl.update(ticks);
             }
         }
 
@@ -94,8 +100,20 @@ export class World {
         }
     }
 
+    private _hasFlowers(): boolean {
+        return this._upperFlowers.length > 0 || this._lowerFlowers.length > 0;
+    }
+
+    private _removeGoneFlowers() {
+        this._upperFlowers = this._upperFlowers.filter(x => x.state !== 'gone');
+        this._lowerFlowers = this._lowerFlowers.filter(x => x.state !== 'gone');
+        if (!this._hasFlowers()) {
+            this._flowerTick = -1;
+        }
+    }
+
     private addFlower(location: Coords) {
-        if (location.x >= -44 && location.x <= 44 && location.y >= 4 && location.y <= 44) {
+        if (location.within(House.boundingRect)) {
             return;
         }
 
@@ -131,6 +149,14 @@ export class World {
         }
         
         if (a.location.y > b.location.y) {
+            return 1;
+        }
+
+        if (a.location.x < b.location.x) {
+            return -1;
+        }
+        
+        if (a.location.x > b.location.x) {
             return 1;
         }
 
