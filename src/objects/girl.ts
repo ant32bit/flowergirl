@@ -12,7 +12,7 @@ export class Girl {
 
     private static _homeLocation: Coords = new Coords(-18, -22);
     private static _justOutsideHomeLocation: Coords = Girl._homeLocation.move(0, 35);
-    private static _relativeBoundingRect: Rect = new Rect(4, 27, 24, 6);
+    private static _relativeBoundingRect: Rect = new Rect(8, 27, 16, 6);
     
     private _animators: {[direction: string]: ArrayAnimator<string>} = 
         's,se,e,ne,n,nw,w,sw'.split(',')
@@ -38,7 +38,7 @@ export class Girl {
     public get target(): Flower { return this._currTarget; }
     public set target(value: Flower) {
         this._currTarget = value;
-        this._currAttackPlan = attacks[0];
+        this._currAttackPlan = this._chooseAttack();
         if (this._state === 'home') {
             this._setPathToLeaveHome();
         }
@@ -51,11 +51,13 @@ export class Girl {
     }
 
     getBoundingRect() {
+        const relativeBoundingRect = this._state == 'attacking' ? this._currAttackPlan.boundingRect : Girl._relativeBoundingRect;
+
         return new Rect(
-            this._path.location.x + Girl._relativeBoundingRect.x, 
-            this._path.location.y + Girl._relativeBoundingRect.y, 
-            Girl._relativeBoundingRect.width,
-            Girl._relativeBoundingRect.height);
+            this._path.location.x + relativeBoundingRect.x, 
+            this._path.location.y + relativeBoundingRect.y, 
+            relativeBoundingRect.width,
+            relativeBoundingRect.height);
     }
 
     goHome() {
@@ -131,7 +133,8 @@ export class Girl {
                 break;
             
             case 'attacking':
-                __sprites.drawSprite(context, this._currAttackPlan.animator.value(), this._path.location);
+                __sprites.drawSprite(context, this._currAttackPlan.animator.value(), 
+                    this._path.location.move(this._currAttackPlan.drawOffsetX, this._currAttackPlan.drawOffsetY));
                 break;
 
             case 'waiting':
@@ -162,17 +165,38 @@ export class Girl {
             this._state = 'returning';
         }
     }
+
+    private _chooseAttack(): Attack {
+        const unboundedAttacks: Attack[] = [];
+        for(const attack of __attacks) {
+            const attackLocation = this._currTarget.location.move(attack.locationOffsetX, attack.locationOffsetY);
+            const attackBoundingRect = attack.boundingRect.move(attackLocation.x, attackLocation.y);
+
+            if (!attackBoundingRect.collidesWith(House.boundingRect)) {
+                unboundedAttacks.push(attack);
+            }
+        }
+
+        const attacks = unboundedAttacks.length > 0 ? unboundedAttacks : __attacks;
+        return attacks[Math.floor(Math.random() * attacks.length)];
+    }
 }
 
 class Attack {
     locationOffsetX: number;
     locationOffsetY: number;
+    drawOffsetX: number;
+    drawOffsetY: number;
     animator: ArrayAnimator<string>;
+    boundingRect: Rect;
     private _hitKey: string;
 
-    constructor(x: number, y: number, key: string, hitKey: string) {
+    constructor(x: number, y: number, dx: number, dy: number, bb: Rect, key: string, hitKey: string) {
         this.locationOffsetX = x;
         this.locationOffsetY = y;
+        this.drawOffsetX = dx;
+        this.drawOffsetY = dy;
+        this.boundingRect = bb;
         this.animator = __sprites.getAnimator(key);
         this._hitKey = hitKey;
     }
@@ -182,6 +206,7 @@ class Attack {
     }
 }
 
-const attacks: Attack[] = [
-    new Attack(-33, -2, 'girl-attacking-1', 'girl-attack-1:hit')
+const __attacks: Attack[] = [
+    new Attack(-33, -2, 0, 0, new Rect(8, 27, 16, 6), 'girl-attacking-1', 'girl-attack-1:hit'),
+    new Attack(-8, -2, 0, -16, new Rect(8, 27, 16, 6), 'girl-attacking-2', 'girl-attack-2:hit'),
 ];

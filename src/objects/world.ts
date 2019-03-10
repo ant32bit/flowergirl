@@ -1,7 +1,7 @@
 import { ServiceProvider, GameLoopService, UpdateContext, DrawContext, GameSettings, Obstacle, SpriteService } from "../services";
 import { House } from "./house";
 import { Flower } from "./flower";
-import { Coords } from "../locators";
+import { Coords, Rect } from "../locators";
 import { Girl } from "./girl";
 
 export class World {
@@ -16,6 +16,10 @@ export class World {
     private _roomLocation = new Coords(-20, -14);
     private _flowers: Flower[] = [];
     private _prevFlowerCount: number = 0;
+
+    private _additionalFlowerExclusionZones: Rect[] = [
+        new Rect(44, -25, 5, 55)
+    ]
 
     services: ServiceProvider = new ServiceProvider();
 
@@ -61,9 +65,7 @@ export class World {
         }
 
         for (const location of context.locations) {
-            this.addFlower(location);
-
-            if (this._girl.target == null) {
+            if (this.addFlower(location) && this._girl.target == null) {
                 this._girl.target = this._getRandomFlower();
             }
         }
@@ -76,6 +78,10 @@ export class World {
 
         context.fill('#bae03c');
         sprites.drawSprite(context, 'room:00', this._roomLocation);
+
+        if (GameSettings.Debug) {
+            this._additionalFlowerExclusionZones.forEach(x => context.drawBoundingRect(x));
+        }
 
         const girlDiv = this._girl.getBoundingRect().y2;
         const houseDiv = House.boundingRect.y2;
@@ -140,17 +146,21 @@ export class World {
         }
     }
 
-    private addFlower(location: Coords) {
+    private addFlower(location: Coords): boolean {
         if (this._flowers.length < World._maxFlowers) {
 
             const flower = new Flower(location);
             if (flower.boundingRect.collidesWith(House.boundingRect)) {
-                return;
+                return false;
+            }
+
+            if (this._additionalFlowerExclusionZones.find(x => flower.boundingRect.collidesWith(x))) {
+                return false;
             }
 
             for (const otherFlower of this._flowers) {
                 if (flower.boundingRect.collidesWith(otherFlower.boundingRect)) {
-                    return;
+                    return false;
                 }
             }
             
@@ -160,7 +170,11 @@ export class World {
             if (this._flowerTick < 0) {
                 this._flowerTick = this._currTick;
             }
+
+            return true;
         }
+
+        return false;
     }
 
     private sortFlowers(a: Flower, b: Flower) {

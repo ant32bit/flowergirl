@@ -86,7 +86,7 @@ class SpriteAnimation {
 export class SpriteService {
     private static _sprites = (() => {
         const img = new Image();
-        img.src = 'e26324170cc81f843ebcab81f7646de8.png';
+        img.src = '8eef08f3b190751049e4b73568de3ac4.png';
         return img;
     })();
 
@@ -99,21 +99,23 @@ export class SpriteService {
                 'w0,w1,w,w2,w3', 'sw0,sw1,sw,sw2,sw3'
             ].join(',')),
         'girl-attack-1': new SpriteCategory(0,160,64,32,256,'00,01,02,hit'),
-        'flower': new SpriteCategory(0,192,16,32,256,[
-            'b0,b1,b2,b3', 
-            'db0,db1,db2,daisy,d0,d1', 'daisy-dead,daisy-dead-float',
-            'rb0,rb1,rb2,rose,r0,r1', 'rose-dead,rose-dead-float'
-        ].join(',')),
-        'steam-1': new SpriteCategory(64,224,20,20,256,'00,01,02,03,04,05,06'),
-        'steam-2': 
-            new SpriteCategory(204,224,32,20,256,'00').mergeWith(
-            new SpriteCategory(0,256,32,20,256,'01,02,03,04')),
-        'glimmer-m': new SpriteCategory(128,256,13,21,256,'00'),
-        'glimmer-s': new SpriteCategory(141,256,7,13,256,'00'),
-        'blast-door': new SpriteCategory(148,256,48,24,256,'closed,01,02,03,04,05,06,07,08,open'),
-        'room': new SpriteCategory(144,304,37,25,256,'00'),
-        'door': new SpriteCategory(181,304,52,54,256,'closed,00,01,02,03,04,05,06,07,08,09,open'),
-        'poop': new SpriteCategory(156,466,86,77,256,'00')
+        'girl-attack-2': new SpriteCategory(0,192,32,48,256,'00,01,02,hit'),
+        'flower': 
+            new SpriteCategory(128,192,16,32,256,'b0,b1,b2,b3,db0,db1,db2,daisy').mergeWith(
+            new SpriteCategory(0,240,16,32,256,[
+                'd0,d1', 'daisy-dead,daisy-dead-float',
+                'rb0,rb1,rb2,rose,r0,r1', 'rose-dead,rose-dead-float'
+            ].join(','))),
+        'steam-1': 
+            new SpriteCategory(192,240,20,20,256,'00,01,02').mergeWith(
+            new SpriteCategory(0,272,20,20,256,'03,04,05,06')),
+        'steam-2': new SpriteCategory(80,272,32,20,256,'00,01,02,03,04'),
+        'blast-door': new SpriteCategory(0,292,48,24,256,'closed,01,02,03,04,05,06,07,08,open'),
+        'door': new SpriteCategory(0,340,52,54,256,'closed,00,01,02,03,04,05,06,07,08,09,open'),
+        'poop': new SpriteCategory(0,502,86,77,256,'00'),
+        'room': new SpriteCategory(86,502,37,25,256,'00'),
+        'glimmer-m': new SpriteCategory(123,502,13,21,256,'00'),
+        'glimmer-s': new SpriteCategory(136,502,7,13,256,'00'),
     }
 
     private static _animations: {[key: string]: SpriteAnimation} = {
@@ -136,6 +138,7 @@ export class SpriteService {
         'girl-walking-w': new SpriteAnimation('girl', '2:w,w0,w1,w,w2,w3', true),
         'girl-walking-sw': new SpriteAnimation('girl', '2:sw,sw0,sw1,sw,sw2,sw3', true),
         'girl-attacking-1': new SpriteAnimation('girl-attack-1', '00,01,02,hit,00', true),
+        'girl-attacking-2': new SpriteAnimation('girl-attack-2', '00,01,02,hit,00', true),
     }
 
     drawSprite(context: DrawContext, key: string, location: Coords) {

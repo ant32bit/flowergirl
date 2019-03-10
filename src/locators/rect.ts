@@ -15,6 +15,10 @@ export class Rect {
     public get x2(): number { return this.x + this.width; }
     public get y2(): number { return this.y + this.height; }
 
+    move(deltaX: number, deltaY: number): Rect {
+        return new Rect(this.x + deltaX, this.y + deltaY, this.width, this.height);
+    }
+
     collidesWith(rect: Rect): boolean {
         return (
             this.x2 > rect.x &&
