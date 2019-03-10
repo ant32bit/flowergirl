@@ -82,13 +82,13 @@ export class PathService {
         }
         
 
-        return segments.reverse();
+        return segments;
     }
 
     private _generateDebugInfo(destination: Coords, segments: PathSegment[]) {
         const segmentInfo: ISegmentDebugInfo[] = [];
         let previousStart = destination;
-        for (const segment of segments.reverse()) {
+        for (const segment of [...segments].reverse()) {
             const start = previousStart.move(
                 segment.vector.x * -segment.distance, 
                 segment.vector.y * -segment.distance);
