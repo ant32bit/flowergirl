@@ -1,12 +1,12 @@
 import { Coords, Rect } from "../locators";
 import { ArrayAnimator } from "../animators";
-import { DrawContext, SpriteService, ServiceProvider } from "../services";
+import { DrawContext, SpriteService, ServiceProvider, GameSettings } from "../services";
 import { SequenceAnimator } from "../animators/sequence-animator";
 
 
 
 export class House {
-    public static boundingRect: Rect = new Rect(-44, -11, 88, 40);
+    public static boundingRect: Rect = new Rect(-44, -25, 88, 55);
 
     private _poopLocation = new Coords(-42, -55);
     private _doorLocation = new Coords(-27, -27);
@@ -26,19 +26,21 @@ export class House {
     private _doorOpeningAnimator: SequenceAnimator;
     private _doorClosingAnimator: SequenceAnimator;
 
+    private _sprites: SpriteService;
+
     constructor() {
-        const spriteService = new ServiceProvider().SpriteService;
+        this._sprites = new ServiceProvider().SpriteService;
 
         this._doorOpeningAnimator = new SequenceAnimator([
-            { name: 'door', atTick: 0, begin: spriteService.getAnimator('door-opening'), before: 'door:closed', after: 'door:open' },
-            { name: 'steam1', atTick: 0, begin: spriteService.getAnimator('steam-1'), before: null, after: null },
-            { name: 'blastdoor', atTick: 14, begin: spriteService.getAnimator('blast-door-opening'), before: 'blast-door:closed', after: 'blast-door:open' },
-            { name: 'steam2', atTick: 14, begin: spriteService.getAnimator('steam-2'), before: null, after: null },
+            { name: 'door', atTick: 0, begin: this._sprites.getAnimator('door-opening'), before: 'door:closed', after: 'door:open' },
+            { name: 'steam1', atTick: 0, begin: this._sprites.getAnimator('steam-1'), before: null, after: null },
+            { name: 'blastdoor', atTick: 14, begin: this._sprites.getAnimator('blast-door-opening'), before: 'blast-door:closed', after: 'blast-door:open' },
+            { name: 'steam2', atTick: 14, begin: this._sprites.getAnimator('steam-2'), before: null, after: null },
         ])
         
         this._doorClosingAnimator = new SequenceAnimator([
-            { name: 'blastdoor', atTick: 0, begin: spriteService.getAnimator('blast-door-closing'), before: 'blast-door:open', after: 'blast-door:closed'},
-            { name: 'door', atTick: 3, begin: spriteService.getAnimator('door-closing'), before: 'door:open', after: 'door:closed' }
+            { name: 'blastdoor', atTick: 0, begin: this._sprites.getAnimator('blast-door-closing'), before: 'blast-door:open', after: 'blast-door:closed'},
+            { name: 'door', atTick: 3, begin: this._sprites.getAnimator('door-closing'), before: 'door:open', after: 'door:closed' }
         ]);
     }
 
@@ -86,35 +88,36 @@ export class House {
         }
     }
 
-    draw(context: DrawContext, sprites: SpriteService) {
-        sprites.drawSprite(context, 'poop:00', this._poopLocation);
+    draw(context: DrawContext) {
+        if (GameSettings.Debug) {
+            context.drawBoundingRect(House.boundingRect);
+        }
+
+        this._sprites.drawSprite(context, 'poop:00', this._poopLocation);
         
         switch(this._doorState) {
             case 'closed': 
-                sprites.drawSprite(context, 'door:closed', this._doorLocation);
+                this._sprites.drawSprite(context, 'door:closed', this._doorLocation);
                 break;
             case 'opening':
                 const openingFrames = this._doorOpeningAnimator.value();    
-                sprites.drawSprite(context, openingFrames['blastdoor'], this._blastDoorLocation);
-                sprites.drawSprite(context, openingFrames['door'], this._doorLocation);
-                sprites.drawSprite(context, openingFrames['steam1'], this._steam1Location);
-                sprites.drawSprite(context, openingFrames['steam2'], this._steam2Location);
+                this._sprites.drawSprite(context, openingFrames['blastdoor'], this._blastDoorLocation);
+                this._sprites.drawSprite(context, openingFrames['door'], this._doorLocation);
+                this._sprites.drawSprite(context, openingFrames['steam1'], this._steam1Location);
+                this._sprites.drawSprite(context, openingFrames['steam2'], this._steam2Location);
                 break;
             case 'open':
-                sprites.drawSprite(context, 'door:open', this._doorLocation);
-                sprites.drawSprite(context, 'blast-door:open', this._blastDoorLocation);
+                this._sprites.drawSprite(context, 'door:open', this._doorLocation);
+                this._sprites.drawSprite(context, 'blast-door:open', this._blastDoorLocation);
                 break;
             case 'closing':
                 const closingFrames = this._doorClosingAnimator.value();    
-                sprites.drawSprite(context, closingFrames['blastdoor'], this._blastDoorLocation);
-                sprites.drawSprite(context, closingFrames['door'], this._doorLocation);
+                this._sprites.drawSprite(context, closingFrames['blastdoor'], this._blastDoorLocation);
+                this._sprites.drawSprite(context, closingFrames['door'], this._doorLocation);
                 break;
         }
         
-        
-        sprites.drawSprite(context, 'glimmer-m:00', this._glimmerMLocation);
-        sprites.drawSprite(context, 'glimmer-s:00', this._glimmerSLocation);
-
-
+        this._sprites.drawSprite(context, 'glimmer-m:00', this._glimmerMLocation);
+        this._sprites.drawSprite(context, 'glimmer-s:00', this._glimmerSLocation);
     }
 }

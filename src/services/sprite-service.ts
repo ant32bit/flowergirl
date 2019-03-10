@@ -118,7 +118,7 @@ export class SpriteService {
 
     private static _animations: {[key: string]: SpriteAnimation} = {
         'door-opening': new SpriteAnimation('door', '00,01,02,02,02,02,03,04,05,06,07,08,09,open', false),
-        'door-closing': new SpriteAnimation('door', '09,07,03,02,02,02,01,00,closed', false),
+        'door-closing': new SpriteAnimation('door', '09,08,07,05,03,02,02,02,01,00,closed', false),
         'blast-door-opening': new SpriteAnimation('blast-door', '01,02,03,04,05,06,07,08,open', false),
         'blast-door-closing': new SpriteAnimation('blast-door', '06,03,closed', false),
         'daisy-blooming': new SpriteAnimation('flower', 'b0,b1,b2,b3,db0,db1,db2,daisy', false),

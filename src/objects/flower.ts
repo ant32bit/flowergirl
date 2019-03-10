@@ -1,6 +1,6 @@
-import { Coords } from "../locators";
+import { Coords, Rect } from "../locators";
 import { ArrayAnimator } from "../animators";
-import { ServiceProvider, DrawContext } from "../services";
+import { ServiceProvider, DrawContext, GameSettings } from "../services";
 
 const serviceProvider = new ServiceProvider();
 export type FlowerState = 'blooming' | 'alive' | 'dead' | 'gone'
@@ -9,14 +9,17 @@ export class Flower {
     public type: string;
     public location: Coords;
     public state: FlowerState;
+    public boundingRect: Rect;
 
     private _bloom: ArrayAnimator<string>;
     private _alive: ArrayAnimator<string>;
     private _dead: string;
     private _hit: string;
 
-    private static _deathDuration = 16;
+    private static _deathDuration = 2 * GameSettings.FPS;
     private static _hitDuration = 2;
+    private static _boundingRect: Rect = new Rect(3, 24, 10, 10); 
+
     private _timeOfDeath?: number = null;
     private _timeOfHit?: number = null;
     private _currTime: number = 0;
@@ -31,7 +34,11 @@ export class Flower {
         this._dead = `flower:${this.type}-dead`;
         this._hit = `flower:${this.type}-dead-float`;
 
-        console.log(this);
+        this.boundingRect = new Rect(
+            this.location.x + Flower._boundingRect.x, 
+            this.location.y + Flower._boundingRect.y,
+            Flower._boundingRect.width,
+            Flower._boundingRect.height);
     }
 
     update(ticks: number) {
@@ -68,6 +75,10 @@ export class Flower {
     }
 
     draw(context: DrawContext) {
+        if (GameSettings.Debug) {
+            context.drawBoundingRect(this.boundingRect);
+        }
+
         if (this.state === 'blooming') {
             serviceProvider.SpriteService.drawSprite(context, this._bloom.value(), this.location)
         }

@@ -1,4 +1,4 @@
-import { ServiceProvider, GameLoopService, UpdateContext, DrawContext } from "../services";
+import { ServiceProvider, GameLoopService, UpdateContext, DrawContext, GameSettings, Obstacle, SpriteService } from "../services";
 import { House } from "./house";
 import { Flower } from "./flower";
 import { Coords } from "../locators";
@@ -6,18 +6,20 @@ import { Girl } from "./girl";
 
 export class World {
 
-    private static _maxFlowers = 20;
+    private static _maxFlowers = 100;
 
     private _currTick: number = 0;
     private _flowerTick: number = -1;
     
     private _house: House = new House();
-    private _roomLocation = new Coords(-20, -14)
-    private _girl: Girl;
-    private _upperFlowers: Flower[] = [];
-    private _lowerFlowers: Flower[] = [];
+    private _girl: Girl = new Girl();
+    private _roomLocation = new Coords(-20, -14);
+    private _flowers: Flower[] = [];
+    private _prevFlowerCount: number = 0;
 
     services: ServiceProvider = new ServiceProvider();
+
+    constructor() { this.services.PathService.obstacles = this._generateObstacles(); }
 
     public attachToGameLoop(gameLoop: GameLoopService) {
         gameLoop.update = this.update.bind(this);
@@ -60,85 +62,103 @@ export class World {
 
         for (const location of context.locations) {
             this.addFlower(location);
+
+            if (this._girl.target == null) {
+                this._girl.target = this._getRandomFlower();
+            }
         }
 
-        this._upperFlowers.forEach(x => x.update(ticks));
-        this._lowerFlowers.forEach(x => x.update(ticks));
+        this._flowers.forEach(x => x.update(ticks));
     }
 
     private draw(context: DrawContext) {
         const sprites = this.services.SpriteService;
 
         context.fill('#bae03c');
-
-        for (const flower of this._upperFlowers) {
-            flower.draw(context);
-        }
-
         sprites.drawSprite(context, 'room:00', this._roomLocation);
 
-        if (this._girl) 
+        const girlDiv = this._girl.getBoundingRect().y2;
+        const houseDiv = House.boundingRect.y2;
+
+        if (girlDiv <= houseDiv) {
+            this._drawFlowers(context, null, girlDiv);
             this._girl.draw(context);
-
-        this._house.draw(context, sprites);
-
-        for (const flower of this._lowerFlowers) {
-            flower.draw(context);
+            this._drawFlowers(context, girlDiv, houseDiv);
+            this._house.draw(context);
+            this._drawFlowers(context, houseDiv, null);
+        } else {
+            this._drawFlowers(context, null, houseDiv);
+            this._house.draw(context);
+            this._drawFlowers(context, houseDiv, girlDiv);
+            this._girl.draw(context);
+            this._drawFlowers(context, girlDiv, null);
         }
+    }
+
+    private _drawFlowers(context: DrawContext, fromY?: number, toY?: number) {
+        let flowers: Flower[] = null;
+        if (fromY == null && toY == null) {
+            flowers = this._flowers;
+        } else if (fromY == null) {
+            flowers = this._flowers.filter(x => x.boundingRect.y2 < toY);
+        } else if (toY == null) {
+            flowers = this._flowers.filter(x => x.boundingRect.y2 >= fromY);
+        } else if (fromY == toY) {
+            return;
+        } else {
+            flowers = this._flowers.filter(x => x.boundingRect.y2 >= fromY && x.boundingRect.y2 < toY);
+        }
+
+        flowers.forEach(x => x.draw(context));
     }
 
     private _getRandomFlower(): Flower {
         
-        const allFlowers = [...this._upperFlowers, ...this._lowerFlowers];
-
-        if (allFlowers.length === 0) {
+        if (this._flowers.length === 0) {
             return null;
         }
         else {
-            const flowerIdx = Math.floor(Math.random() * allFlowers.length);
-            return allFlowers[flowerIdx];
+            const flowerIdx = Math.floor(Math.random() * this._flowers.length);
+            return this._flowers[flowerIdx];
         }
     }
 
     private _hasFlowers(): boolean {
-        return this._upperFlowers.length > 0 || this._lowerFlowers.length > 0;
+        return this._flowers.length > 0;
     }
 
     private _removeGoneFlowers() {
-        this._upperFlowers = this._upperFlowers.filter(x => x.state !== 'gone');
-        this._lowerFlowers = this._lowerFlowers.filter(x => x.state !== 'gone');
+        this._flowers = this._flowers.filter(x => x.state !== 'gone');
+        if (this._prevFlowerCount !== this._flowers.length) {
+            this._prevFlowerCount = this._flowers.length;
+
+            this.services.PathService.obstacles = this._generateObstacles();
+        }
+
         if (!this._hasFlowers()) {
             this._flowerTick = -1;
         }
     }
 
     private addFlower(location: Coords) {
-        if (location.within(House.boundingRect)) {
-            return;
-        }
-
-        const allFlowers = [...this._upperFlowers, ...this._lowerFlowers];
-
-        if (allFlowers.length < World._maxFlowers) {
-            if (allFlowers.length == 0) {
-                this._flowerTick = this._currTick;
-            }
+        if (this._flowers.length < World._maxFlowers) {
 
             const flower = new Flower(location);
+            if (flower.boundingRect.collidesWith(House.boundingRect)) {
+                return;
+            }
 
-            for (const otherFlower of allFlowers) {
-                if (flower.location.distance(otherFlower.location) < 5) {
+            for (const otherFlower of this._flowers) {
+                if (flower.boundingRect.collidesWith(otherFlower.boundingRect)) {
                     return;
                 }
             }
+            
+            this._flowers.push(flower);
+            this._flowers = this._flowers.sort(this.sortFlowers);
 
-            if (flower.location.y < 4) {
-                this._upperFlowers.push(flower);
-                this._upperFlowers = this._upperFlowers.sort(this.sortFlowers);
-            }
-            else {
-                this._lowerFlowers.push(flower);
-                this._lowerFlowers = this._lowerFlowers.sort(this.sortFlowers);
+            if (this._flowerTick < 0) {
+                this._flowerTick = this._currTick;
             }
         }
     }
@@ -161,5 +181,21 @@ export class World {
         }
 
         return 0;
+    }
+
+    private _generateObstacles(): Obstacle[] {
+        const obstacles = this._flowers.map(x => new Obstacle(x.boundingRect, 5));
+        obstacles.push(new Obstacle(House.boundingRect, 1000));
+        return obstacles;
+    }
+}
+
+class DrawState {
+    houseDrawn: boolean;
+    girlDrawn: boolean;
+
+    constructor() {
+        this.houseDrawn = false;
+        this.girlDrawn = false;
     }
 }

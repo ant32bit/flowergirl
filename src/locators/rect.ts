@@ -12,11 +12,14 @@ export class Rect {
         this.height = height;
     }
 
+    public get x2(): number { return this.x + this.width; }
+    public get y2(): number { return this.y + this.height; }
+
     collidesWith(rect: Rect): boolean {
         return (
-            this.x + this.width > rect.x &&
-            rect.x + rect.width > this.x &&
-            this.y + this.height > rect.y &&
-            rect.y + rect.height > this.y );
+            this.x2 > rect.x &&
+            rect.x2 > this.x &&
+            this.y2 > rect.y &&
+            rect.y2 > this.y );
     }
 }

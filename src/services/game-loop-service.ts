@@ -1,9 +1,9 @@
 import { Coords, Rect } from "../locators";
+import { GameSettings } from "./game-settings";
 
 export class GameLoopService {
     
-    private static _fps = 8;
-    private static _mspf = 1000 / GameLoopService._fps;
+    private static _mspf = 1000 / GameSettings.FPS;
 
     private _frameFn: (callback: () => void) => void;
     private _started: boolean = false;
@@ -136,6 +136,12 @@ export class DrawContext {
         this._canvas.rect(0, 0, this._width, this._height);
         this._canvas.fillStyle = color;
         this._canvas.fill();
+    }
+
+    public drawBoundingRect(rect: Rect) {
+        const translatedRect = this.translate(new Coords(rect.x, rect.y))
+            this.canvas.strokeStyle = 'red';
+            this.canvas.strokeRect(translatedRect.x, translatedRect.y, rect.width, rect.height);
     }
 
     public isVisible(rect: Rect) {
