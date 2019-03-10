@@ -185,17 +185,7 @@ export class World {
 
     private _generateObstacles(): Obstacle[] {
         const obstacles = this._flowers.map(x => new Obstacle(x.boundingRect, 5));
-        obstacles.push(new Obstacle(House.boundingRect, 1000));
+        obstacles.push(new Obstacle(House.boundingRect, 50));
         return obstacles;
-    }
-}
-
-class DrawState {
-    houseDrawn: boolean;
-    girlDrawn: boolean;
-
-    constructor() {
-        this.houseDrawn = false;
-        this.girlDrawn = false;
     }
 }
