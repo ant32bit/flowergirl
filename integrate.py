@@ -17,7 +17,7 @@ def make_root_files(env):
     root_template = 'root-template/'
     www_root = env + 'www-root/'
 
-    main_js = env + 'bundle.js'
+    bundle_js = env + 'bundle.js'
     index_html = 'index.html'
 
     if os.path.exists(www_root):
@@ -25,11 +25,11 @@ def make_root_files(env):
 
     os.makedirs(www_root)
     
-    new_main_js = get_file_hash(main_js) + '.js'
+    new_js = get_file_hash(bundle_js) + '.js'
 
-    shutil.copyfile(main_js, www_root + new_main_js)
+    shutil.copyfile(bundle_js, www_root + new_js)
 
-    other_files = {}
+    other_files = { 'bundle.js': new_js }
 
     for file in os.listdir(root_template):
         if file != index_html:
@@ -40,8 +40,11 @@ def make_root_files(env):
     with open(root_template + index_html) as fh:
         index_html_content = fh.read()
     
+    for file in other_files.keys():
+        index_html_content = index_html_content.replace('{{' + file + '}}', other_files[file])
+
     with open(www_root + index_html, 'w') as fh:
-        fh.write(index_html_content.replace('{{main.js}}', new_main_js))
+        fh.write(index_html_content)
     
 if __name__ == "__main__":
     make_root_files('dist/')

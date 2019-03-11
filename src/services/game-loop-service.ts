@@ -12,6 +12,7 @@ export class GameLoopService {
     private _drawFn: (context: DrawContext) => void = null;
     private _ticker: number = 0;
     private _clicks: Coords[] = [];
+    private _ratio: number = window.devicePixelRatio;
 
     constructor() {
         if (window.requestAnimationFrame) {
@@ -99,7 +100,7 @@ export class GameLoopService {
         const x = event.clientX;
         const y = event.clientY;
 
-        this._clicks.push(new Coords(x - midX, y - midY));
+        this._clicks.push(new Coords((x - midX) / this._ratio, (y - midY) / this._ratio));
     }
 }
 
@@ -116,13 +117,15 @@ export class DrawContext {
     private _midY: number;
     private _width: number;
     private _height: number;
+    private _ratio: number;
 
     public get canvas(): CanvasRenderingContext2D { return this._canvas; }
 
     constructor(canvas: HTMLCanvasElement) {
 
-        this._width = canvas.clientWidth;
-        this._height = canvas.clientHeight;
+        this._ratio = window.devicePixelRatio;
+        this._width = canvas.clientWidth / this._ratio;
+        this._height = canvas.clientHeight / this._ratio;
         this._midX = Math.round(this._width / 2);
         this._midY = Math.round(this._height / 2);
 
