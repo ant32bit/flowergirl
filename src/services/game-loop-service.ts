@@ -172,7 +172,7 @@ export class DrawContext {
     }
 
     public translate(loc: Coords): Coords {
-        return new Coords(loc.x + this._midX, loc.y + this._midY);
+        return new Coords(Math.round(loc.x + this._midX), Math.round(loc.y + this._midY));
     }
 }
 
