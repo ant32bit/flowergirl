@@ -1,4 +1,4 @@
-import { ServiceProvider, GameLoopService, UpdateContext, DrawContext, GameSettings, Obstacle, SpriteService } from "../services";
+import { ServiceProvider, GameLoopService, UpdateContext, DrawContext, GameSettings, Obstacle } from "../services";
 import { House } from "./house";
 import { Flower } from "./flower";
 import { Coords, Rect } from "../locators";
@@ -16,10 +16,6 @@ export class World {
     private _roomLocation = new Coords(-20, -14);
     private _flowers: Flower[] = [];
     private _prevFlowerCount: number = 0;
-
-    private _additionalFlowerExclusionZones: Rect[] = [
-        new Rect(44, -25, 5, 55)
-    ]
 
     services: ServiceProvider = new ServiceProvider();
 
@@ -45,7 +41,7 @@ export class World {
         if (this._house.door === 'open') {
             if (this._girl.state === 'home') {
                 if (this._hasFlowers()) {
-                    this._girl.target = this._getRandomFlower();
+                    this._girl.target = this._getFlower();
                 }
                 else {
                     this._house.closeDoor();
@@ -53,7 +49,7 @@ export class World {
             }
             else if (this._girl.state === 'waiting') {
                 if (this._hasFlowers()) {
-                    this._girl.target = this._getRandomFlower();
+                    this._girl.target = this._getFlower();
                 }
                 else {
                     this._girl.goHome();
@@ -65,8 +61,10 @@ export class World {
         }
 
         for (const location of context.locations) {
-            if (this.addFlower(location) && this._girl.target == null) {
-                this._girl.target = this._getRandomFlower();
+            if (this.addFlower(location)) {
+                if (!this._girl.target || (this._girl.state !== 'attacking' && GameSettings.Algorithm === 'closest')) {
+                    this._girl.target = this._getFlower();
+                }
             }
         }
 
@@ -78,10 +76,6 @@ export class World {
 
         context.fill('#bae03c');
         sprites.drawSprite(context, 'room:00', this._roomLocation);
-
-        if (GameSettings.Debug) {
-            this._additionalFlowerExclusionZones.forEach(x => context.drawBoundingRect(x));
-        }
 
         const girlDiv = this._girl.getBoundingRect().y2;
         const houseDiv = House.boundingRect.y2;
@@ -118,15 +112,29 @@ export class World {
         flowers.forEach(x => x.draw(context));
     }
 
+    private _getFlower(): Flower {
+        return GameSettings.Algorithm === 'closest' ? this._getClosestFlower() : this._getRandomFlower();
+    }
+
     private _getRandomFlower(): Flower {
         
         if (this._flowers.length === 0) {
             return null;
         }
-        else {
-            const flowerIdx = Math.floor(Math.random() * this._flowers.length);
-            return this._flowers[flowerIdx];
+
+        const flowerIdx = Math.floor(Math.random() * this._flowers.length);
+        return this._flowers[flowerIdx];
+    }
+
+    private _getClosestFlower(): Flower {
+        
+        if (this._flowers.length === 0) {
+            return null;
         }
+        
+        const distances = this._flowers.map(x => this._girl.location.distance(x.location));
+        const flowerIdx = distances.indexOf(Math.min(...distances));
+        return this._flowers[flowerIdx];
     }
 
     private _hasFlowers(): boolean {
@@ -151,10 +159,6 @@ export class World {
 
             const flower = new Flower(location);
             if (flower.boundingRect.collidesWith(House.boundingRect)) {
-                return false;
-            }
-
-            if (this._additionalFlowerExclusionZones.find(x => flower.boundingRect.collidesWith(x))) {
                 return false;
             }
 

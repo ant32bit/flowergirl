@@ -2,9 +2,6 @@ import { Coords, Rect } from "../locators";
 import { GameSettings } from "./game-settings";
 
 export class GameLoopService {
-    
-    private static _mspf = 1000 / GameSettings.FPS;
-
     private _frameFn: (callback: () => void) => void;
     private _started: boolean = false;
     private _renderts: number = 0;
@@ -27,7 +24,23 @@ export class GameLoopService {
             };
         } else {
             this._frameFn = (callback: (ts:number) => void) => {
-                setInterval(() => { callback(Date.now()); }, GameLoopService._mspf);
+                let fps = -1;
+                let h_interval = 0;
+                let intervalFn = () => { 
+                    if (GameSettings.FPS !== fps) {
+                        if (h_interval) {
+                            clearInterval(h_interval);
+                        }
+
+                        fps = GameSettings.FPS;
+                        h_interval = setInterval(intervalFn, 1000/fps);
+                        return;
+                    }
+
+                    callback(Date.now()); 
+                };
+
+                intervalFn();
             }
         }
     }
@@ -77,11 +90,12 @@ export class GameLoopService {
     }
 
     private updateTicker(ts: number): boolean {
+        const mspf = 1000 / GameSettings.FPS;
         let diff = ts - this._renderts;
         let ticks = 0;
 
-        while (diff >= GameLoopService._mspf) {
-            diff -= GameLoopService._mspf;
+        while (diff >= mspf) {
+            diff -= mspf;
             ticks++;
         }
 

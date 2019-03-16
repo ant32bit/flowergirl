@@ -33,8 +33,8 @@ export class Path {
         return this;
     }
 
-    public draw(context: DrawContext, objWidth: number, objHeight: number) {
-        let a = context.translate(this._currLocation.move(objWidth / 2, objHeight / 2));
+    public draw(context: DrawContext, xOffset: number = 0, yOffset: number = 0) {
+        let a = context.translate(this._currLocation.move(xOffset, yOffset));
         
         context.canvas.beginPath();
         context.canvas.moveTo(a.x, a.y);

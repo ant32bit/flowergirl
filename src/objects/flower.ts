@@ -16,7 +16,7 @@ export class Flower {
     private _dead: string;
     private _hit: string;
 
-    private static _deathDuration = 2 * GameSettings.FPS;
+    private static _deathDuration = 16;
     private static _hitDuration = 2;
     private static _boundingRect: Rect = new Rect(3, 24, 10, 10); 
 

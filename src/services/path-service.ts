@@ -17,7 +17,6 @@ const __vectors: {[direction: string]: Coords} = {
 export class PathService {
     private _obstacles: Obstacle[] = [];
     public set obstacles(value: Obstacle[]) { this._obstacles = value; }
-    
 
     public calculateDirectPath(a: Coords, b: Coords): Path {
         return new Path(a, b, this._getDirectSegments(a, b));
@@ -30,13 +29,8 @@ export class PathService {
         while (open.length > 0) {
             const q = open.shift();
             const adjacents = this._generateAdjacentNodes(q, boundingBox);
-            //console.log(q, open.length, closed.length, adjacents);
             for (const adj of adjacents) {
                 if (adj.location.equals(b)) {
-                    if (GameSettings.Debug) {
-                        console.log({'start': a, 'destination': b});
-                    }
-
                     return new Path(a, b, this._generatePathSegments(q));
                 }
 
@@ -61,11 +55,6 @@ export class PathService {
     private _generatePathSegments(node: Node): PathSegment[] {
         const segments: PathSegment[] = this._getDirectSegments(node.location, node.destination);
 
-
-        if (GameSettings.Debug) {
-            console.log(this._generateDebugInfo(node.destination, segments));
-        }
-
         for (let q = node; q; q = q.parent) {
             if (q.g > 0) {
                 if (segments.length === 0 || segments[0].direction !== q.direction) {
@@ -76,12 +65,7 @@ export class PathService {
                 }
             }
         }
-
-        if (GameSettings.Debug) {
-            console.log(this._generateDebugInfo(node.destination, segments));
-        }
         
-
         return segments;
     }
 

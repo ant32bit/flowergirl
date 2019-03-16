@@ -21,9 +21,8 @@ export class Girl {
             return animators;
         }, {});
 
-    private _movement = new ArrayAnimator<number>([0,0,3,3,3,3], true);
+    private _movement = new ArrayAnimator<number>([0,0,1,1,1,1], true);
 
-    private _obstacles: Rect[] = [ House.boundingRect ];
     private _currTarget: Flower = null;
     private _currAttackPlan: Attack = null;
 
@@ -78,7 +77,7 @@ export class Girl {
                 case 'returning':
                     Object.keys(this._animators).forEach(x => this._animators[x].next(1));
                     this._movement.next(1);
-                    this._path.move(this._movement.value());
+                    this._path.move(this._movement.value() * GameSettings.Pace);
                     break;
 
                 case 'attacking':
@@ -121,7 +120,9 @@ export class Girl {
         if (GameSettings.Debug) {
             context.drawBoundingRect(this.getBoundingRect())
             if (!this._path.finished) {
-                this._path.draw(context, 32, 32);
+                const xOffset = Girl._relativeBoundingRect.x + (Girl._relativeBoundingRect.width / 2);
+                const yOffset = Girl._relativeBoundingRect.y + (Girl._relativeBoundingRect.height / 2);
+                this._path.draw(context, xOffset, yOffset);
             }
         }
 
@@ -178,7 +179,9 @@ export class Girl {
         }
 
         const attacks = unboundedAttacks.length > 0 ? unboundedAttacks : __attacks;
-        return attacks[Math.floor(Math.random() * attacks.length)];
+        const chosenAttack = attacks[Math.floor(Math.random() * attacks.length)];
+        chosenAttack.animator.reset();
+        return chosenAttack;
     }
 }
 
@@ -209,4 +212,6 @@ class Attack {
 const __attacks: Attack[] = [
     new Attack(-33, -2, 0, 0, new Rect(8, 27, 16, 6), 'girl-attacking-1', 'girl-attack-1:hit'),
     new Attack(-8, -2, 0, -16, new Rect(8, 27, 16, 6), 'girl-attacking-2', 'girl-attack-2:hit'),
+    new Attack(10, -2, -14, 0, new Rect(9, 27, 16, 6), 'girl-attacking-3', 'girl-attack-3:hit'),
+    new Attack(6, 4, -14, -2, new Rect(10, 26, 16, 6), 'girl-attacking-4', 'girl-attack-4:hit'),
 ];
