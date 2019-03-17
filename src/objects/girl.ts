@@ -3,6 +3,7 @@ import { ServiceProvider, DrawContext, GameSettings } from "../services";
 import { ArrayAnimator } from "../animators";
 import { House } from "./house";
 import { Flower } from "./flower";
+import { GirlStats, FlowerStats } from "./stats";
 
 export type GirlState = 'home' | 'leaving' | 'moving' | 'attacking' | 'waiting' | 'returning';
 const __paths = new ServiceProvider().PathService;
@@ -114,6 +115,22 @@ export class Girl {
                     break;
             }
         }
+    }
+
+    stats(): GirlStats {
+        const stats = new GirlStats();
+        stats.Location = this._path.location;
+        stats.Direction = this._path.direction;
+        stats.State = this._state;
+
+        if(this._currTarget) {
+            stats.Target = new FlowerStats();
+            stats.Target.Location = this._currTarget.location;
+            stats.Target.Type = this._currTarget.type;
+            stats.Target.State = this._currTarget.state;
+        }
+        
+        return stats;
     }
 
     draw(context: DrawContext) {

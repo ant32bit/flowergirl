@@ -3,6 +3,7 @@ import { House } from "./house";
 import { Flower } from "./flower";
 import { Coords, Rect } from "../locators";
 import { Girl } from "./girl";
+import { WorldStats } from "./stats";
 
 export class World {
 
@@ -62,13 +63,29 @@ export class World {
 
         for (const location of context.locations) {
             if (this.addFlower(location)) {
-                if (!this._girl.target || (this._girl.state !== 'attacking' && GameSettings.Algorithm === 'closest')) {
+                if (!this._girl.target) {
                     this._girl.target = this._getFlower();
+                }
+                else if (this._girl.state !== 'attacking') {
+                    if (GameSettings.Algorithm === 'closest')
+                        this._girl.target = this._getFlower();
+                    else 
+                        this._girl.target = this._girl.target;
                 }
             }
         }
 
         this._flowers.forEach(x => x.update(ticks));
+
+        context.stats = this._stats();
+    }
+
+    private _stats(): WorldStats {
+        const stats = new WorldStats();
+        stats.Flowers = this._flowers.length;
+        stats.Girl = this._girl ? this._girl.stats() : null;
+        stats.House = this._house.stats();
+        return stats;
     }
 
     private draw(context: DrawContext) {

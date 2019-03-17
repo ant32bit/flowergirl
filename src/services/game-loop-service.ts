@@ -1,5 +1,6 @@
 import { Coords, Rect } from "../locators";
 import { GameSettings } from "./game-settings";
+import { Stats, WorldStats } from "../objects/stats";
 
 export class GameLoopService {
     private _frameFn: (callback: () => void) => void;
@@ -74,18 +75,37 @@ export class GameLoopService {
             return;
         }
 
+        const stats = new Stats();
+        stats.FrameRate = ts - this._renderts;
+
         if (this.updateTicker(ts)) {
+
+            const r_updateStart = Date.now();
 
             if (this._updateFn) {
                 const clicks = this._clicks;
                 this._clicks = [];
-                this._updateFn(new UpdateContext(this._ticker, clicks))
+                const updateContext = new UpdateContext(this._ticker, clicks);
+                this._updateFn(updateContext);
+                stats.World = updateContext.stats;
             }
         
+            const canvas = <HTMLCanvasElement>document.getElementById('viewport');
+            const drawContext = new DrawContext(canvas);
+
+            const r_drawStart = Date.now();
+
             if (this._drawFn) {
-                const canvas = <HTMLCanvasElement>document.getElementById('viewport');
-                this._drawFn(new DrawContext(canvas));
+                this._drawFn(drawContext);
             }
+
+            const r_finished = Date.now();
+
+            stats.UpdateTime = r_drawStart - r_updateStart;
+            stats.DrawTime = r_finished - r_drawStart;
+
+            if (GameSettings.Debug)
+                stats.draw(drawContext);
         }
     }
 
@@ -119,8 +139,10 @@ export class GameLoopService {
 }
 
 export class UpdateContext {
+
     public get tick(): number { return this._tick; }
     public get locations(): Coords[] { return this._locations; }
+    public stats: WorldStats = new WorldStats();
 
     constructor(private _tick: number, private _locations: Coords[]) { }
 }

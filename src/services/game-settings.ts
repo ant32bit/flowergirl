@@ -75,14 +75,19 @@ class BooleanSetting implements ISetting {
         let raw = settings()[this._key];
         if (raw !== this._lastRaw) {
             this._lastRaw = raw;
-            if (typeof raw === 'boolean') {
+
+            if (raw == null) {
+                this._value = this._default;
+            } else if (typeof raw === 'boolean') {
                 this._value = raw;
             } else {
                 raw = raw.toString().toLowerCase();
                 if (raw === 'false')
                     this._value = false;
+                else if (raw === 'true')
+                    this._value = true;
                 else {
-                    this._value = raw ? true : this._default;
+                    this._value = this._default;
                 }
             }
         }
@@ -103,13 +108,23 @@ class NumberSetting implements ISetting {
     }
 
     public set value(value: number) {
-        if (this._isValid(value)) {
-            settings()[this._key] = value;
-        }   
+        settings()[this._key] = this._constrain(value);
     }
 
-    private _isValid(value: number): boolean {
-        return ((this._min == null || value >= this._min) && (this._max == null || value <= this._max));
+    private _constrain(value: number): number {
+        if (!isFinite(value)) {
+            return this._default;
+        }
+
+        if (this._min != null && this._min > value) {
+            return this._min;
+        }
+
+        if (this._max != null && this._max < value) {
+            return this._max;
+        }
+
+        return value;
     }
 
     private _sync() {
@@ -121,8 +136,8 @@ class NumberSetting implements ISetting {
                 raw = parseInt(raw);
             }
 
-            if (typeof raw === 'number' && this._isValid(raw)) {
-                this._value = raw;
+            if (typeof raw === 'number') {
+                this._value = this._constrain(raw);
             }
             else {
                 this._value = this._default;

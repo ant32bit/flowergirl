@@ -2,6 +2,7 @@ import { Coords, Rect } from "../locators";
 import { ArrayAnimator } from "../animators";
 import { DrawContext, SpriteService, ServiceProvider, GameSettings } from "../services";
 import { SequenceAnimator } from "../animators/sequence-animator";
+import { HouseStats } from "./stats";
 
 
 
@@ -86,6 +87,12 @@ export class House {
                 this._doorClosingAnimator.next(ticks);
             }
         }
+    }
+
+    stats(): HouseStats {
+        const stats = new HouseStats();
+        stats.State = this._doorState;
+        return stats;
     }
 
     draw(context: DrawContext) {
