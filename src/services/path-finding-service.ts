@@ -1,5 +1,5 @@
 import { Rect, Coords, Path, Direction, PathSegment } from "../locators";
-import { GameSettings } from "./game-settings";
+import { ObstaclesService } from "./obstacles-service";
 
 const __nodeSize = 10;
 const __adjacentNodeParams: {k: number, d: Direction}[] = [
@@ -14,9 +14,9 @@ const __vectors: {[direction: string]: Coords} = {
     'n': new Coords(0,-1), 'nw': new Coords(-1,-1), 'w': new Coords(-1,0), 'sw': new Coords(-1,1)
 };
 
-export class PathService {
-    private _obstacles: Obstacle[] = [];
-    public set obstacles(value: Obstacle[]) { this._obstacles = value; }
+export class PathFindingService {
+    
+    constructor(private _obstacles: ObstaclesService) { }
 
     public calculateDirectPath(a: Coords, b: Coords): Path {
         return new Path(a, b, this._getDirectSegments(a, b));
@@ -117,9 +117,17 @@ export class PathService {
             relativeBoundingBox.width,
             relativeBoundingBox.height);
 
-        return 1 + this._obstacles
-            .filter(x => absoluteBoundingBox.collidesWith(x.boundingBox))
-            .reduce((weight, obstacle) => weight += obstacle.weight, 0);
+        let weight = 1;
+
+        if (this._obstacles.collides(absoluteBoundingBox, 'house')) {
+            weight += 50;
+        }
+
+        if (this._obstacles.collides(absoluteBoundingBox, 'flowers')) {
+            weight += 5;
+        }
+
+        return weight;
     }
 
     private _compareNodes(a: Node, b: Node): number {
@@ -180,16 +188,6 @@ class Node {
         this.g = (parent != null ? parent.g : 0) + cost;
         this.h = Math.sqrt(Math.pow(location.x - destination.x, 2) + Math.pow(location.y - destination.y, 2));
         this.f = this.g + this.h;
-    }
-}
-
-export class Obstacle {
-    boundingBox: Rect;
-    weight: number;
-
-    constructor(boundingBox: Rect, weight: number) {
-        this.boundingBox = boundingBox;
-        this.weight = weight;
     }
 }
 

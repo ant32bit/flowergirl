@@ -1,6 +1,7 @@
-import { Coords, Rect } from "../locators";
+import { Coords, Rect, Circle } from "../locators";
 import { GameSettings } from "./game-settings";
 import { Stats, WorldStats } from "../objects/stats";
+import { ViewportService } from "./viewport-service";
 
 export class GameLoopService {
     private _frameFn: (callback: () => void) => void;
@@ -10,9 +11,8 @@ export class GameLoopService {
     private _drawFn: (context: DrawContext) => void = null;
     private _ticker: number = 0;
     private _clicks: Coords[] = [];
-    private _ratio: number = window.devicePixelRatio;
 
-    constructor() {
+    constructor(private _viewport: ViewportService) {
         if (window.requestAnimationFrame) {
             this._frameFn = (callback: (ts:number) => void) => {
                 const _callback = (hrts: number) => { callback(hrts); requestAnimationFrame(_callback); }
@@ -129,12 +129,7 @@ export class GameLoopService {
     }
 
     private getClick(event: MouseEvent) {
-        const midX = Math.round(event.srcElement.clientWidth / 2);
-        const midY = Math.round(event.srcElement.clientHeight / 2);
-        const x = event.clientX;
-        const y = event.clientY;
-
-        this._clicks.push(new Coords((x - midX) / this._ratio, (y - midY) / this._ratio));
+        this._clicks.push(this._viewport.translate(event.clientX, event.clientY));
     }
 }
 
@@ -177,10 +172,18 @@ export class DrawContext {
         this._canvas.fill();
     }
 
-    public drawBoundingRect(rect: Rect) {
+    public drawBoundingRect(rect: Rect, color: string = 'red') {
         const translatedRect = this.translate(new Coords(rect.x, rect.y))
-            this.canvas.strokeStyle = 'red';
-            this.canvas.strokeRect(translatedRect.x, translatedRect.y, rect.width, rect.height);
+        this.canvas.strokeStyle = color;
+        this.canvas.strokeRect(translatedRect.x, translatedRect.y, rect.width, rect.height);
+    }
+
+    public drawBoundingCircle(circle: Circle, color: string = 'red') {
+        const translatedCircle = this.translate(circle.centre);
+        this.canvas.beginPath();
+        this.canvas.arc(translatedCircle.x, translatedCircle.y, circle.radius, 0, 2 * Math.PI);
+        this.canvas.strokeStyle = color;
+        this.canvas.stroke();
     }
 
     public isVisible(rect: Rect) {
@@ -196,5 +199,29 @@ export class DrawContext {
     public translate(loc: Coords): Coords {
         return new Coords(Math.round(loc.x + this._midX), Math.round(loc.y + this._midY));
     }
+
+    public draw(drawables: IDrawable[]) {
+        const sorted = drawables.sort(this._orderByZ);
+        for (const drawable of sorted) {
+            drawable.draw(this);
+        }
+    }
+
+    private _orderByZ(a: IDrawable, b: IDrawable): number {
+        if (a.zIndex < b.zIndex) {
+            return -1;
+        }
+        
+        if (a.zIndex > b.zIndex) {
+            return 1;
+        }
+
+        return 0;
+    }
 }
 
+export interface IDrawable {
+    zIndex: number;
+    boundingBox: Rect;
+    draw(context: DrawContext): void;
+}

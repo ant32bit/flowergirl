@@ -107,7 +107,7 @@ class SpriteAnimation {
 export class SpriteService {
     private static _sprites = (() => {
         const img = new Image();
-        img.src = '0a1514186a700c4b7adf08270a4f26fa.png';
+        img.src = 'd01b8fc3b3bf78503b0e625c98650f32.png';
         return img;
     })();
 
@@ -144,6 +144,16 @@ export class SpriteService {
         builder.addFrames('rose','r0','r1');
         builder.addFrames('rose-dead','rose-dead-float');
         
+        builder.addCategory('bird', 16, 16);
+        builder.addFrames('s','s-feed','s-fly1','s-fly2','s-fly3');
+        builder.addFrames('se','se-feed','se-fly1','se-fly2','se-fly3');
+        builder.addFrames('e','e-feed','e-fly1','e-fly2','e-fly3');
+        builder.addFrames('ne','ne-feed','ne-fly1','ne-fly2','ne-fly3');
+        builder.addFrames('n','n-feed','n-fly1','n-fly2','n-fly3');
+        builder.addFrames('nw','nw-feed','nw-fly1','nw-fly2','nw-fly3');
+        builder.addFrames('w','w-feed','w-fly1','w-fly2','w-fly3');
+        builder.addFrames('sw','sw-feed','sw-fly1','sw-fly2','sw-fly3');
+        
         builder.addCategory('steam-1', 20, 20);
         builder.addFrames('00','01','02','03','04','05','06');
 
@@ -172,30 +182,45 @@ export class SpriteService {
         return categories;
     })();
     
-    private static _animations: {[key: string]: SpriteAnimation} = {
-        'door-opening': new SpriteAnimation('door', '00,01,02,02,02,02,03,04,05,06,07,08,09,open', false),
-        'door-closing': new SpriteAnimation('door', '09,08,07,05,03,02,02,02,01,00,closed', false),
-        'blast-door-opening': new SpriteAnimation('blast-door', '01,02,03,04,05,06,07,08,open', false),
-        'blast-door-closing': new SpriteAnimation('blast-door', '06,03,closed', false),
-        'daisy-blooming': new SpriteAnimation('flower', 'b0,b1,b2,b3,db0,db1,db2,daisy', false),
-        'daisy': new SpriteAnimation('flower', '2:daisy,d0,daisy,d1', true),
-        'rose-blooming': new SpriteAnimation('flower', 'b0,b1,b2,b3,rb0,rb1,rb2,rose', false),
-        'rose': new SpriteAnimation('flower', '2:rose,r0,rose,r1', true),
-        'steam-1': new SpriteAnimation('steam-1', '00,01,02,03,04,05,06', false),
-        'steam-2': new SpriteAnimation('steam-2', '00,01,02,03,04', false),
-        'girl-walking-s': new SpriteAnimation('girl', '2:s,s0,s1,s,s2,s3', true),
-        'girl-walking-se': new SpriteAnimation('girl', '2:se,se0,se1,se,se2,se3', true),
-        'girl-walking-e': new SpriteAnimation('girl', '2:e,e0,e1,e,e2,e3', true),
-        'girl-walking-ne': new SpriteAnimation('girl', '2:ne,ne0,ne1,ne,ne2,ne3', true),
-        'girl-walking-n': new SpriteAnimation('girl', '2:n,n0,n1,n,n2,n3', true),
-        'girl-walking-nw': new SpriteAnimation('girl', '2:nw,nw0,nw1,nw,nw2,nw3', true),
-        'girl-walking-w': new SpriteAnimation('girl', '2:w,w0,w1,w,w2,w3', true),
-        'girl-walking-sw': new SpriteAnimation('girl', '2:sw,sw0,sw1,sw,sw2,sw3', true),
-        'girl-attacking-1': new SpriteAnimation('girl-attack-1', '00,01,02,hit,00', true),
-        'girl-attacking-2': new SpriteAnimation('girl-attack-2', '00,01,02,hit,00', true),
-        'girl-attacking-3': new SpriteAnimation('girl-attack-3', '00,01,hit,02,00', true),
-        'girl-attacking-4': new SpriteAnimation('girl-attack-4', '00,01,02,03,04,hit,05,06,07,08,09,10,11,12,13,14', false),
-    }
+    private static _animations: {[key: string]: SpriteAnimation} = (function() {
+        const animations = {
+            'door-opening': new SpriteAnimation('door', '00,01,02,02,02,02,03,04,05,06,07,08,09,open', false),
+            'door-closing': new SpriteAnimation('door', '09,08,07,05,03,02,02,02,01,00,closed', false),
+            'blast-door-opening': new SpriteAnimation('blast-door', '01,02,03,04,05,06,07,08,open', false),
+            'blast-door-closing': new SpriteAnimation('blast-door', '06,03,closed', false),
+            'daisy-blooming': new SpriteAnimation('flower', 'b0,b1,b2,b3,db0,db1,db2,daisy', false),
+            'daisy': new SpriteAnimation('flower', '2:daisy,d0,daisy,d1', true),
+            'rose-blooming': new SpriteAnimation('flower', 'b0,b1,b2,b3,rb0,rb1,rb2,rose', false),
+            'rose': new SpriteAnimation('flower', '2:rose,r0,rose,r1', true),
+            'steam-1': new SpriteAnimation('steam-1', '00,01,02,03,04,05,06', false),
+            'steam-2': new SpriteAnimation('steam-2', '00,01,02,03,04', false),
+            'girl-attacking-1': new SpriteAnimation('girl-attack-1', '00,01,02,hit,00', true),
+            'girl-attacking-2': new SpriteAnimation('girl-attack-2', '00,01,02,hit,00', true),
+            'girl-attacking-3': new SpriteAnimation('girl-attack-3', '00,01,hit,02,00', true),
+            'girl-attacking-4': new SpriteAnimation('girl-attack-4', '00,01,02,03,04,hit,05,06,07,08,09,10,11,12,13,14', false)
+        };
+
+        for(const direction of 's,se,e,ne,n,nw,w,sw'.split(',')) {
+
+            animations[`girl-walking-${direction}`] = new SpriteAnimation(
+                'girl', 
+                '2:' + [
+                    direction,
+                    direction + '0',
+                    direction + '1',
+                    direction,
+                    direction + '2',
+                    direction + '3'
+                ].join(','),
+                true
+            );
+
+            animations[`bird-flying-${direction}`] = new SpriteAnimation(
+                'bird', `${direction}-fly1,${direction}-fly2,${direction}-fly3`, true);
+        }
+
+        return animations;
+    })();
 
     drawSprite(context: DrawContext, key: string, location: Coords) {
 

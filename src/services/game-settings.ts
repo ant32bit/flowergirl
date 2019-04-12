@@ -152,7 +152,8 @@ export abstract class GameSettings {
             'debug': new BooleanSetting('debug', false),
             'fps': new NumberSetting('fps', 8, 4, 60),
             'algorithm': new StringSetting('algorithm', 'closest', ['closest', 'random']),
-            'pace': new NumberSetting('pace', 4, 1)
+            'pace': new NumberSetting('pace', 4, 1),
+            'flockradius': new NumberSetting('flockradius', 30, 15, 5),
         };
         
         const queryStringStart = location.href.indexOf('?') + 1;
@@ -175,4 +176,5 @@ export abstract class GameSettings {
     public static get Debug(): boolean { return this._settings.debug.value; }
     public static get Algorithm(): string { return this._settings.algorithm.value; }
     public static get Pace(): number { return this._settings.pace.value; }
+    public static get FlockRadius(): number { return this._settings.flockradius.value; }
 }

@@ -1,13 +1,13 @@
 import { Coords, Rect } from "../locators";
-import { ArrayAnimator } from "../animators";
-import { DrawContext, SpriteService, ServiceProvider, GameSettings } from "../services";
-import { SequenceAnimator } from "../animators/sequence-animator";
+import { ArrayAnimator, SequenceAnimator } from "../animators";
+import { DrawContext, SpriteService, ServiceProvider, GameSettings, IDrawable } from "../services";
 import { HouseStats } from "./stats";
 
 
 
-export class House {
+export class House implements IDrawable {
     public static boundingRect: Rect = new Rect(-44, -25, 88, 55);
+    public static zIndex: number = 25; 
 
     private _poopLocation = new Coords(-42, -55);
     private _doorLocation = new Coords(-27, -27);
@@ -30,7 +30,9 @@ export class House {
     private _sprites: SpriteService;
 
     constructor() {
-        this._sprites = new ServiceProvider().SpriteService;
+        const services = new ServiceProvider();
+        this._sprites = services.SpriteService;
+        services.ObstaclesService.register('house', [House.boundingRect]);
 
         this._doorOpeningAnimator = new SequenceAnimator([
             { name: 'door', atTick: 0, begin: this._sprites.getAnimator('door-opening'), before: 'door:closed', after: 'door:open' },
@@ -94,6 +96,9 @@ export class House {
         stats.State = this._doorState;
         return stats;
     }
+
+    get zIndex(): number { return House.zIndex; }
+    get boundingBox(): Rect { return House.boundingRect; }
 
     draw(context: DrawContext) {
         if (GameSettings.Debug) {

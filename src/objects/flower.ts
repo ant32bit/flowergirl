@@ -1,15 +1,14 @@
 import { Coords, Rect } from "../locators";
 import { ArrayAnimator } from "../animators";
-import { ServiceProvider, DrawContext, GameSettings } from "../services";
+import { ServiceProvider, DrawContext, GameSettings, IDrawable } from "../services";
 
 const serviceProvider = new ServiceProvider();
 export type FlowerState = 'blooming' | 'alive' | 'dead' | 'gone'
 
-export class Flower {
+export class Flower implements IDrawable {
     public type: string;
     public location: Coords;
     public state: FlowerState;
-    public boundingRect: Rect;
 
     private _bloom: ArrayAnimator<string>;
     private _alive: ArrayAnimator<string>;
@@ -18,7 +17,9 @@ export class Flower {
 
     private static _deathDuration = 16;
     private static _hitDuration = 2;
-    private static _boundingRect: Rect = new Rect(3, 24, 10, 10); 
+    private static _relativeBoundingRect: Rect = new Rect(3, 24, 10, 10); 
+
+    private _boundingRect: Rect;
 
     private _timeOfDeath?: number = null;
     private _timeOfHit?: number = null;
@@ -34,11 +35,11 @@ export class Flower {
         this._dead = `flower:${this.type}-dead`;
         this._hit = `flower:${this.type}-dead-float`;
 
-        this.boundingRect = new Rect(
-            this.location.x + Flower._boundingRect.x, 
-            this.location.y + Flower._boundingRect.y,
-            Flower._boundingRect.width,
-            Flower._boundingRect.height);
+        this._boundingRect = new Rect(
+            this.location.x + Flower._relativeBoundingRect.x, 
+            this.location.y + Flower._relativeBoundingRect.y,
+            Flower._relativeBoundingRect.width,
+            Flower._relativeBoundingRect.height);
     }
 
     update(ticks: number) {
@@ -74,9 +75,12 @@ export class Flower {
         }
     }
 
+    get zIndex(): number { return this.boundingBox.y2 - 5; }
+    get boundingBox(): Rect { return this._boundingRect}
+
     draw(context: DrawContext) {
         if (GameSettings.Debug) {
-            context.drawBoundingRect(this.boundingRect);
+            context.drawBoundingRect(this._boundingRect);
         }
 
         if (this.state === 'blooming') {

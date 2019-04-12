@@ -1,15 +1,15 @@
 import { Coords, Rect, Path, PathSegment } from "../locators";
-import { ServiceProvider, DrawContext, GameSettings } from "../services";
+import { ServiceProvider, DrawContext, GameSettings, IDrawable } from "../services";
 import { ArrayAnimator } from "../animators";
 import { House } from "./house";
 import { Flower } from "./flower";
 import { GirlStats, FlowerStats } from "./stats";
 
 export type GirlState = 'home' | 'leaving' | 'moving' | 'attacking' | 'waiting' | 'returning';
-const __paths = new ServiceProvider().PathService;
-const __sprites = new ServiceProvider().SpriteService;
 
-export class Girl {
+const __services = new ServiceProvider();
+
+export class Girl implements IDrawable {
 
     private static _homeLocation: Coords = new Coords(-18, -22);
     private static _justOutsideHomeLocation: Coords = Girl._homeLocation.move(0, 35);
@@ -18,7 +18,7 @@ export class Girl {
     private _animators: {[direction: string]: ArrayAnimator<string>} = 
         's,se,e,ne,n,nw,w,sw'.split(',')
         .reduce((animators, direction) => {
-            animators[direction] = __sprites.getAnimator(`girl-walking-${direction}`);
+            animators[direction] = __services.SpriteService.getAnimator(`girl-walking-${direction}`);
             return animators;
         }, {});
 
@@ -115,6 +115,8 @@ export class Girl {
                     break;
             }
         }
+
+        __services.ObstaclesService.register('girl', [this.getBoundingRect()]);
     }
 
     stats(): GirlStats {
@@ -129,9 +131,12 @@ export class Girl {
             stats.Target.Type = this._currTarget.type;
             stats.Target.State = this._currTarget.state;
         }
-        
+
         return stats;
     }
+
+    get zIndex(): number { return this.boundingBox.y2 - 3; }
+    get boundingBox(): Rect { return this.getBoundingRect(); }
 
     draw(context: DrawContext) {
         if (GameSettings.Debug) {
@@ -147,17 +152,17 @@ export class Girl {
             case 'leaving':
             case 'moving':
             case 'returning':
-                __sprites.drawSprite(context, this._animators[this._path.direction].value(), this._path.location);
+                __services.SpriteService.drawSprite(context, this._animators[this._path.direction].value(), this._path.location);
                 break;
             
             case 'attacking':
-                __sprites.drawSprite(context, this._currAttackPlan.animator.value(), 
+                __services.SpriteService.drawSprite(context, this._currAttackPlan.animator.value(), 
                     this._path.location.move(this._currAttackPlan.drawOffsetX, this._currAttackPlan.drawOffsetY));
                 break;
 
             case 'waiting':
             case 'home':
-                __sprites.drawSprite(context, `girl:${this._path.direction}`, this._path.location);
+                __services.SpriteService.drawSprite(context, `girl:${this._path.direction}`, this._path.location);
                 //do nothing
                 break;
         }   
@@ -165,21 +170,21 @@ export class Girl {
 
     private _setPathToTarget() {
         const attackPosition = this._currTarget.location.move(this._currAttackPlan.locationOffsetX, this._currAttackPlan.locationOffsetY);
-        this._path = __paths.calculatePath(this._path.location, attackPosition, Girl._relativeBoundingRect);
+        this._path = __services.PathFindingService.calculatePath(this._path.location, attackPosition, Girl._relativeBoundingRect);
         this._state = 'moving';
     }
     
     private _setPathToLeaveHome() {
         if (this._state === 'home') {
-            this._path = __paths.calculateDirectPath(Girl._homeLocation, Girl._justOutsideHomeLocation);
+            this._path = __services.PathFindingService.calculateDirectPath(Girl._homeLocation, Girl._justOutsideHomeLocation);
             this._state = 'leaving';
         }
     }
 
     private _setPathToReturnHome() {
         if (this._state !== 'home' && this._state !== 'returning') {
-            this._path = __paths.calculatePath(this._path.location, Girl._justOutsideHomeLocation, Girl._relativeBoundingRect)
-                .then(__paths.calculateDirectPath(Girl._justOutsideHomeLocation, Girl._homeLocation));
+            this._path = __services.PathFindingService.calculatePath(this._path.location, Girl._justOutsideHomeLocation, Girl._relativeBoundingRect)
+                .then(__services.PathFindingService.calculateDirectPath(Girl._justOutsideHomeLocation, Girl._homeLocation));
             this._state = 'returning';
         }
     }
@@ -217,7 +222,7 @@ class Attack {
         this.drawOffsetX = dx;
         this.drawOffsetY = dy;
         this.boundingRect = bb;
-        this.animator = __sprites.getAnimator(key);
+        this.animator = __services.SpriteService.getAnimator(key);
         this._hitKey = hitKey;
     }
 
