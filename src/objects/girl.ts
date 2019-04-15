@@ -3,7 +3,7 @@ import { ServiceProvider, DrawContext, GameSettings, IDrawable } from "../servic
 import { ArrayAnimator } from "../animators";
 import { House } from "./house";
 import { Flower } from "./flower";
-import { GirlStats, FlowerStats } from "./stats";
+import { StatsDiv } from "./stats";
 
 export type GirlState = 'home' | 'leaving' | 'moving' | 'attacking' | 'waiting' | 'returning';
 
@@ -29,8 +29,12 @@ export class Girl implements IDrawable {
 
     private _path: Path = new Path(Girl._homeLocation, Girl._homeLocation, [new PathSegment(new Coords(0,1), 0)]);
     private _state: GirlState = 'home';
+
+    private _stats: StatsDiv;
     
     constructor() {
+        this._stats = new StatsDiv('Girl');
+        this._updateStats();
     }
 
     public get state(): GirlState { return this._state; }
@@ -117,22 +121,8 @@ export class Girl implements IDrawable {
         }
 
         __services.ObstaclesService.register('girl', [this.getBoundingRect()]);
-    }
 
-    stats(): GirlStats {
-        const stats = new GirlStats();
-        stats.Location = this._path.location;
-        stats.Direction = this._path.direction;
-        stats.State = this._state;
-
-        if(this._currTarget) {
-            stats.Target = new FlowerStats();
-            stats.Target.Location = this._currTarget.location;
-            stats.Target.Type = this._currTarget.type;
-            stats.Target.State = this._currTarget.state;
-        }
-
-        return stats;
+        this._updateStats();
     }
 
     get zIndex(): number { return this.boundingBox.y2 - 3; }
@@ -140,12 +130,16 @@ export class Girl implements IDrawable {
 
     draw(context: DrawContext) {
         if (GameSettings.Debug) {
+            this._stats.show();
             context.drawBoundingRect(this.getBoundingRect())
             if (!this._path.finished) {
                 const xOffset = Girl._relativeBoundingRect.x + (Girl._relativeBoundingRect.width / 2);
                 const yOffset = Girl._relativeBoundingRect.y + (Girl._relativeBoundingRect.height / 2);
                 this._path.draw(context, xOffset, yOffset);
             }
+        }
+        else {
+            this._stats.delete();
         }
 
         switch (this._state) {
@@ -166,6 +160,23 @@ export class Girl implements IDrawable {
                 //do nothing
                 break;
         }   
+    }
+
+    public destroy() {
+        this._stats.delete();
+    }
+
+    private _updateStats() {
+        const location = this._path.location;
+        
+        const stats = [
+            `Location: (${location.x},${location.y})`,
+            `Direction: ${this._path.direction}`,
+            `State: ${this._state}`
+        ]
+
+        this._stats.setPosition(location.move(37,0));
+        this._stats.setInfo(stats.join('<br>'));
     }
 
     private _setPathToTarget() {

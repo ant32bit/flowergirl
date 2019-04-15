@@ -1,6 +1,7 @@
 import { Coords, Direction, Rect } from "../locators";
 import { ServiceProvider, DrawContext, GameSettings, IDrawable } from "../services";
 import { PathAnimator, ArrayAnimator } from "../animators";
+import { StatsDiv } from "./stats";
 
 export type BirdState = 'flying'|'feeding'|'standing';
 
@@ -35,12 +36,17 @@ export class Bird implements IDrawable {
         return animations;
     })();
 
+    private _stats: StatsDiv;
+
     feedingDirection: Direction;
 
     constructor() {        
         this._setRandomStartLocation();
         this.target = new Coords(0,0);
         this.feed(0);
+
+        this._stats = new StatsDiv('Bird');
+        this._updateStats();
     }
 
     feed(pecks: number) {
@@ -89,6 +95,8 @@ export class Bird implements IDrawable {
         if (this.state === 'feeding' && this._feeding.finished()) {
             this._state = 'standing';
         }
+
+        this._updateStats();
     }
 
     get zIndex(): number { return this._elevation > 15 ? Infinity : this.boundingBox.y2 - 3; }
@@ -116,11 +124,14 @@ export class Bird implements IDrawable {
 
     draw(context: DrawContext) {
         if (GameSettings.Debug) {
-            
+            this._stats.show();
             context.drawBoundingRect(this.boundingBox);
             if (!this._path.finished()) {
                 this._path.draw(context, 8, 8);
             }
+        }
+        else {
+            this._stats.delete();
         }
 
         const vector = this._path.value();
@@ -132,6 +143,20 @@ export class Bird implements IDrawable {
         else {
             _serviceProvider.SpriteService.drawSprite(context, this._feeding.value(), vector.position);
         }
+    }
+
+    private _updateStats() {
+        const location = this._path.value().position;
+        ;
+
+        const stats = [
+            `Location: (${location.x},${location.y})`,
+            `Elevation: ${this._elevation}`,
+            `State: ${this._state}`
+        ];
+
+        this._stats.setPosition(location.move(37,0));
+        this._stats.setInfo(stats.join('<br>'));
     }
 
     private _setElevation(t: number) {

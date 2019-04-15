@@ -1,6 +1,6 @@
 import { Coords, Rect, Circle } from "../locators";
 import { GameSettings } from "./game-settings";
-import { Stats, WorldStats } from "../objects/stats";
+import { StatsDiv } from "../objects/stats";
 import { ViewportService } from "./viewport-service";
 
 export class GameLoopService {
@@ -11,6 +11,7 @@ export class GameLoopService {
     private _drawFn: (context: DrawContext) => void = null;
     private _ticker: number = 0;
     private _clicks: Coords[] = [];
+    private _statsDiv: StatsDiv;
 
     constructor(private _viewport: ViewportService) {
         if (window.requestAnimationFrame) {
@@ -59,6 +60,9 @@ export class GameLoopService {
     }
 
     public start(): boolean {
+
+        this._statsDiv = new StatsDiv(null);
+
         if (!this._started && this._updateFn && this._drawFn) {
             document.getElementById('viewport').addEventListener('click', this.getClick.bind(this))
             this._frameFn(this.run.bind(this));
@@ -87,7 +91,6 @@ export class GameLoopService {
                 this._clicks = [];
                 const updateContext = new UpdateContext(this._ticker, clicks);
                 this._updateFn(updateContext);
-                stats.World = updateContext.stats;
             }
         
             const canvas = <HTMLCanvasElement>document.getElementById('viewport');
@@ -103,9 +106,15 @@ export class GameLoopService {
 
             stats.UpdateTime = r_drawStart - r_updateStart;
             stats.DrawTime = r_finished - r_drawStart;
-
-            if (GameSettings.Debug)
-                stats.draw(drawContext);
+            stats.update(this._statsDiv);
+            
+            if (GameSettings.Debug) {
+                this._statsDiv.setPosition(this._viewport.translate(0,0).move(5,5));
+                this._statsDiv.show();
+            }
+            else {
+                this._statsDiv.delete();
+            }
         }
     }
 
@@ -137,7 +146,6 @@ export class UpdateContext {
 
     public get tick(): number { return this._tick; }
     public get locations(): Coords[] { return this._locations; }
-    public stats: WorldStats = new WorldStats();
 
     constructor(private _tick: number, private _locations: Coords[]) { }
 }
@@ -224,4 +232,32 @@ export interface IDrawable {
     zIndex: number;
     boundingBox: Rect;
     draw(context: DrawContext): void;
+}
+
+class Stats {
+    FrameRate: number = 0;
+    UpdateTime: number = 0;
+    DrawTime: number = 0;
+
+    update(div: StatsDiv) {
+        div.setPosition(new Coords(0,0));
+        div.setInfo(this._toText().join('<br>'));
+    }
+
+    private _toText(): string[] {
+        const fps = this.FrameRate > 0 ? 1000 / this.FrameRate : 0;
+        return [
+            `FPS: ${fps}`,
+            `Total: ${this.FrameRate}ms`,
+            `Update: ${this.UpdateTime}ms`,
+            `Draw: ${this.DrawTime}ms`,
+            '',
+            '<strong>Settings</strong>',
+            `FrameRate: ${GameSettings.FPS} FPS`,
+            `Search: ${GameSettings.Algorithm}`,
+            `Pace: ${GameSettings.Pace} pixels`,
+            `Flock Radius: ${GameSettings.FlockRadius} pixels`,
+            `Debug Mode: ${GameSettings.Debug ? 'on' : 'off'}`
+        ];
+    }
 }

@@ -15,6 +15,10 @@ export class ViewportService {
         return this.currState.translateFromClient(clientX, clientY);
     }
 
+    public project(position: Coords): number[] {
+        return this.currState.projectOntoClient(position);
+    }
+
     private _getCanvas() {
         if (this._canvas == null) {
             this._canvas = <HTMLCanvasElement>document.getElementById('viewport');
@@ -41,6 +45,16 @@ class ViewportState {
         const midY = Math.round(this._height / 2);
 
         return new Coords((x - midX) / this._ratio, (y - midY) / this._ratio);
+    }
+
+    public projectOntoClient(coords: Coords): number[] {
+        const midX = Math.round(this._width / 2);
+        const x = coords.x * this._ratio + midX;
+
+        const midY = Math.round(this._height / 2);
+        const y = coords.y * this._ratio + midY;
+
+        return [x,y];
     }
 
     public getVisibleRect(): Rect {

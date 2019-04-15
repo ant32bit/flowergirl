@@ -1,6 +1,7 @@
 import { Coords, Rect } from "../locators";
 import { ArrayAnimator } from "../animators";
 import { ServiceProvider, DrawContext, GameSettings, IDrawable } from "../services";
+import { StatsDiv } from "./stats";
 
 const serviceProvider = new ServiceProvider();
 export type FlowerState = 'blooming' | 'alive' | 'dead' | 'gone'
@@ -25,6 +26,8 @@ export class Flower implements IDrawable {
     private _timeOfHit?: number = null;
     private _currTime: number = 0;
 
+    private _stats: StatsDiv;
+
     constructor(location: Coords) {
         this.location = new Coords(location.x - 8, location.y - 29);
         this.type = ['daisy', 'rose'][Math.floor(Math.random() * 2)];
@@ -40,6 +43,9 @@ export class Flower implements IDrawable {
             this.location.y + Flower._relativeBoundingRect.y,
             Flower._relativeBoundingRect.width,
             Flower._relativeBoundingRect.height);
+
+        this._stats = new StatsDiv('Flower');
+        this._updateStats();
     }
 
     update(ticks: number) {
@@ -63,6 +69,8 @@ export class Flower implements IDrawable {
         if (this._timeOfHit != null && this._currTime - this._timeOfHit > Flower._hitDuration) {
             this._timeOfHit = null;
         }
+
+        this._updateStats();
     }
 
     hit() {
@@ -80,7 +88,11 @@ export class Flower implements IDrawable {
 
     draw(context: DrawContext) {
         if (GameSettings.Debug) {
+            this._stats.show();
             context.drawBoundingRect(this._boundingRect);
+        }
+        else {
+            this._stats.delete();
         }
 
         if (this.state === 'blooming') {
@@ -97,5 +109,18 @@ export class Flower implements IDrawable {
                 serviceProvider.SpriteService.drawSprite(context, this._dead, this.location);
             }
         }
+    }
+
+    private _updateStats() {
+        this._stats.setPosition(this.location.move(21,0));
+        this._stats.setInfo([
+            `Location: (${this.location.x}, ${this.location.y})`,
+            `Type: ${this.type}`,
+            `State: ${this.state}`
+        ].join('<br>'))
+    }
+
+    destroy() {
+        this._stats.delete();
     }
 }

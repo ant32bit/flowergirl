@@ -3,7 +3,6 @@ import { House } from "./house";
 import { Flower } from "./flower";
 import { Coords } from "../locators";
 import { Girl } from "./girl";
-import { WorldStats } from "./stats";
 import { Flock } from "./flock";
 
 export class World {
@@ -19,7 +18,6 @@ export class World {
     private _flowers: Flower[] = [];
     private _prevFlowerCount: number = 0;
     private _flock: Flock = new Flock();
-
 
     services: ServiceProvider = new ServiceProvider();
 
@@ -41,6 +39,7 @@ export class World {
 
         this._house.update(ticks);
         if (this._house.door === 'closed' && this._flowerTick > 0 && this._currTick - this._flowerTick > 8) {
+            this._girl.destroy();
             this._girl = new Girl();
             this._house.openDoor();
         }
@@ -82,16 +81,6 @@ export class World {
         }
 
         this._flowers.forEach(x => x.update(ticks));
-
-        context.stats = this._stats();
-    }
-
-    private _stats(): WorldStats {
-        const stats = new WorldStats();
-        stats.Flowers = this._flowers.length;
-        stats.Girl = this._girl ? this._girl.stats() : null;
-        stats.House = this._house.stats();
-        return stats;
     }
 
     private draw(context: DrawContext) {
@@ -136,23 +125,6 @@ export class World {
         }
     }
 
-    private _drawFlowers(context: DrawContext, fromY?: number, toY?: number) {
-        let flowers: Flower[] = null;
-        if (fromY == null && toY == null) {
-            flowers = this._flowers;
-        } else if (fromY == null) {
-            flowers = this._flowers.filter(x => x.boundingBox.y2 < toY);
-        } else if (toY == null) {
-            flowers = this._flowers.filter(x => x.boundingBox.y2 >= fromY);
-        } else if (fromY == toY) {
-            return;
-        } else {
-            flowers = this._flowers.filter(x => x.boundingBox.y2 >= fromY && x.boundingBox.y2 < toY);
-        }
-
-        flowers.forEach(x => x.draw(context));
-    }
-
     private _getFlower(): Flower {
         return GameSettings.Algorithm === 'closest' ? this._getClosestFlower() : this._getRandomFlower();
     }
@@ -183,7 +155,17 @@ export class World {
     }
 
     private _removeGoneFlowers() {
-        this._flowers = this._flowers.filter(x => x.state !== 'gone');
+        const flowers = [];
+        for(const flower of this._flowers) {
+            if (flower.state === 'gone') {
+                flower.destroy();
+            }
+            else {
+                flowers.push(flower);
+            }
+        }
+
+        this._flowers = flowers;
         if (this._prevFlowerCount !== this._flowers.length) {
             this._prevFlowerCount = this._flowers.length;
 

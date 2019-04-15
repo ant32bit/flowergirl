@@ -1,9 +1,7 @@
 import { Coords, Rect } from "../locators";
 import { ArrayAnimator, SequenceAnimator } from "../animators";
 import { DrawContext, SpriteService, ServiceProvider, GameSettings, IDrawable } from "../services";
-import { HouseStats } from "./stats";
-
-
+import { StatsDiv } from "./stats";
 
 export class House implements IDrawable {
     public static boundingRect: Rect = new Rect(-44, -25, 88, 55);
@@ -16,6 +14,7 @@ export class House implements IDrawable {
     private _steam2Location = new Coords(-16, 0);
     private _glimmerMLocation: Coords = null;
     private _glimmerSLocation: Coords = null;
+    private _stats: StatsDiv;
 
     private _glimmerMLocationAnimator = new ArrayAnimator<Coords>(
         [-55, -54, -52, -51, -50, -50, -51, -52, -54, -55].map(y => new Coords(-24, y)), true);
@@ -33,6 +32,9 @@ export class House implements IDrawable {
         const services = new ServiceProvider();
         this._sprites = services.SpriteService;
         services.ObstaclesService.register('house', [House.boundingRect]);
+
+        this._stats = new StatsDiv('House');
+        this._stats.setPosition(new Coords(House.boundingRect.x2 + 5, House.boundingRect.y));
 
         this._doorOpeningAnimator = new SequenceAnimator([
             { name: 'door', atTick: 0, begin: this._sprites.getAnimator('door-opening'), before: 'door:closed', after: 'door:open' },
@@ -61,7 +63,6 @@ export class House implements IDrawable {
         }
     }
 
-
     update(ticks: number) {
 
         this._glimmerMLocation = this._glimmerMLocationAnimator.next(ticks);
@@ -89,20 +90,21 @@ export class House implements IDrawable {
                 this._doorClosingAnimator.next(ticks);
             }
         }
-    }
 
-    stats(): HouseStats {
-        const stats = new HouseStats();
-        stats.State = this._doorState;
-        return stats;
+        this._stats.setInfo(`Door: ${this._doorState}`);
     }
 
     get zIndex(): number { return House.zIndex; }
     get boundingBox(): Rect { return House.boundingRect; }
 
     draw(context: DrawContext) {
+        
         if (GameSettings.Debug) {
             context.drawBoundingRect(House.boundingRect);
+            this._stats.show();
+        }
+        else {
+            this._stats.delete();
         }
 
         this._sprites.drawSprite(context, 'poop:00', this._poopLocation);
