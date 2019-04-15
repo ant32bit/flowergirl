@@ -37,8 +37,10 @@ export class Bird implements IDrawable {
     })();
 
     private _stats: StatsDiv;
-
-    feedingDirection: Direction;
+    public get location(): Coords {
+        const location = this._path.value().position;
+        return new Coords(Math.round(location.x), Math.round(location.y));
+    }
 
     constructor() {        
         this._setRandomStartLocation();
@@ -102,7 +104,7 @@ export class Bird implements IDrawable {
     get zIndex(): number { return this._elevation > 15 ? Infinity : this.boundingBox.y2 - 3; }
     get boundingBox(): Rect {
         const relativeBoundingRect = Bird._relativeBoundingRect;
-        const location = this._path.value().position;
+        const location = this.location;
 
         return new Rect(
             location.x + relativeBoundingRect.x, 
@@ -134,20 +136,20 @@ export class Bird implements IDrawable {
             this._stats.delete();
         }
 
-        const vector = this._path.value();
+        const location = this.location;
 
         if (this.state === 'flying') {
-            const sprite = this._flying[vector.direction].value();
-            _serviceProvider.SpriteService.drawSprite(context, sprite, vector.position.move(0,-this._elevation));
+            const direction = this._path.value().direction;
+            const sprite = this._flying[direction].value();
+            _serviceProvider.SpriteService.drawSprite(context, sprite, location.move(0,-this._elevation));
         }
         else {
-            _serviceProvider.SpriteService.drawSprite(context, this._feeding.value(), vector.position);
+            _serviceProvider.SpriteService.drawSprite(context, this._feeding.value(), location);
         }
     }
 
     private _updateStats() {
-        const location = this._path.value().position;
-        ;
+        const location = this.location;
 
         const stats = [
             `Location: (${location.x},${location.y})`,
@@ -161,7 +163,7 @@ export class Bird implements IDrawable {
 
     private _setElevation(t: number) {
         // y = 4(x - x^2)
-        this._elevation = this._maxElevation * 4 * (t - Math.pow(t, 2));
+        this._elevation = Math.round(this._maxElevation * 4 * (t - Math.pow(t, 2)));
     }
 
     private _setRandomStartLocation() {

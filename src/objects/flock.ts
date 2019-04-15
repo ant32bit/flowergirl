@@ -11,12 +11,12 @@ export class Flock {
 
     constructor() {
         this.birds = [new Bird(), new Bird(), new Bird()];
-        this.disperse();
+        this._relocate();
     }
 
     update(ticks: number) {
         if (__services.ObstaclesService.intersects(this._trigger, 'girl')) {
-            this.disperse();
+            this._relocate();
         }
         else {
             for (const bird of this.birds) {
@@ -50,7 +50,7 @@ export class Flock {
         }
     }
 
-    disperse() {
+    private _relocate() {
         const flockRadius = GameSettings.FlockRadius;
 
         const visibleArea = __services.ViewportService.getVisibleRect();
