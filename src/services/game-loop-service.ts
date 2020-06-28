@@ -61,6 +61,7 @@ export class GameLoopService {
 
     public start(): boolean {
 
+        // needs to be done here as constructor is called during Service Provider construction
         this._statsDiv = new StatsDiv(null);
 
         if (!this._started && this._updateFn && this._drawFn) {
@@ -138,7 +139,11 @@ export class GameLoopService {
     }
 
     private getClick(event: MouseEvent) {
-        this._clicks.push(this._viewport.translate(event.clientX, event.clientY));
+        const doc = document.documentElement;
+        const xOffset = (window.pageXOffset || doc.scrollLeft) - (doc.clientLeft || 0);
+        const yOffset = (window.pageYOffset || doc.scrollTop)  - (doc.clientTop || 0);
+
+        this._clicks.push(this._viewport.translate(event.clientX + xOffset, event.clientY + yOffset));
     }
 }
 
