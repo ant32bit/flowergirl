@@ -1,1 +1,1 @@
-body,#viewport{margin:0;width:100%;height:100%;position:fixed;overflow:hidden;}#debug-container{float:left;height: 0;}.debug-info {height:0;font:300 12px sans-serif;user-select:none;pointer-events:none;position:relative;z-index:1;}
+body,#viewport{margin:0;width:100%;height:100%;position:fixed;overflow:hidden;image-rendering:pixelated;}#debug-container{float:left;height: 0;}.debug-info {height:0;font:300 12px sans-serif;user-select:none;pointer-events:none;position:relative;z-index:1;}
