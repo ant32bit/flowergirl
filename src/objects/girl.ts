@@ -5,7 +5,7 @@ import { House } from "./house";
 import { Flower } from "./flower";
 import { StatsDiv } from "./stats";
 
-export type GirlState = 'home' | 'leaving' | 'moving' | 'attacking' | 'waiting' | 'returning';
+export type GirlState = 'home' | 'leaving' | 'moving' | 'attacking' | 'waiting' | 'returning' | 'moving-to-location';
 
 const __services = new ServiceProvider();
 
@@ -26,6 +26,9 @@ export class Girl implements IDrawable {
 
     private _currTarget: Flower = null;
     private _currAttackPlan: Attack = null;
+    private _targetLocation: Coords = null;
+    private _nextTarget: Flower = null;
+    private _nextLocation: Coords = null;
 
     private _path: Path = new Path(Girl._homeLocation, Girl._homeLocation, [new PathSegment(new Coords(0,1), 0)]);
     private _state: GirlState = 'home';
@@ -54,6 +57,24 @@ export class Girl implements IDrawable {
         }
     }
 
+    public moveTo(location: Coords) {
+        this._currTarget = null;
+        this._currAttackPlan = null;
+        // Calculate girl's location so that her bottom center aligns with the clicked location
+        // Girl's bottom center is at location + (16, 33) relative to her position
+        const girlTargetLocation = location.move(-16, -33);
+        this._targetLocation = girlTargetLocation;
+        if (this._state === 'home') {
+            this._setPathToLeaveHome();
+        }
+        else if (this._state === 'leaving') {
+            // do nothing, leaving
+        }
+        else {
+            this._setPathToLocation(girlTargetLocation);
+        }
+    }
+
     getBoundingRect() {
         const relativeBoundingRect = this._state == 'attacking' ? this._currAttackPlan.boundingRect : Girl._relativeBoundingRect;
 
@@ -68,10 +89,39 @@ export class Girl implements IDrawable {
         this._setPathToReturnHome();
     }
 
+    exitHouse() {
+        this._currTarget = null;
+        this._currAttackPlan = null;
+        this._targetLocation = null;
+        this._setPathToLeaveHome();
+    }
+
+    public queueTarget(flower: Flower) {
+        this._nextTarget = flower;
+        this._nextLocation = null;
+    }
+
+    public queueMoveTo(location: Coords) {
+        this._nextTarget = null;
+        // Calculate girl's location so that her bottom center aligns with the clicked location
+        this._nextLocation = location.move(-16, -33);
+    }
+
+    private _executeQueuedAction() {
+        if (this._nextTarget) {
+            this.target = this._nextTarget;
+            this._nextTarget = null;
+        } else if (this._nextLocation) {
+            this._setPathToLocation(this._nextLocation);
+            this._nextLocation = null;
+        }
+    }
+
     update(ticks: number) {
         if (this._currTarget && this._currTarget.state == 'gone') {
             this._currTarget = null;
             this._state = 'waiting';
+            this._executeQueuedAction();
         }
 
         for (let i = 0; i < ticks; i++) {
@@ -80,6 +130,7 @@ export class Girl implements IDrawable {
                 case 'moving':
                 case 'leaving':
                 case 'returning':
+                case 'moving-to-location':
                     Object.keys(this._animators).forEach(x => this._animators[x].next(1));
                     this._movement.next(1);
                     this._path.move(this._movement.value() * GameSettings.Pace);
@@ -89,6 +140,10 @@ export class Girl implements IDrawable {
                     this._currAttackPlan.animator.next(1);
                     if (this._currAttackPlan.isHitFrame()) {
                         this._currTarget.hit();
+                    }
+                    if (this._currAttackPlan.animator.finished()) {
+                        this._state = 'waiting';
+                        this._executeQueuedAction();
                     }
                     break;
                 
@@ -101,11 +156,22 @@ export class Girl implements IDrawable {
         if (this._path.finished) {
             switch (this._state) {
                 case 'leaving':
-                    this._setPathToTarget()
+                    if (this._targetLocation) {
+                        this._setPathToLocation(this._targetLocation);
+                    } else if (this._currTarget) {
+                        this._setPathToTarget();
+                    } else {
+                        this._state = 'waiting';
+                    }
                     break;
                 
                 case 'moving':
                     this._state = 'attacking';
+                    break;
+
+                case 'moving-to-location':
+                    this._state = 'waiting';
+                    this._targetLocation = null;
                     break;
 
                 case 'returning':
@@ -146,6 +212,7 @@ export class Girl implements IDrawable {
             case 'leaving':
             case 'moving':
             case 'returning':
+            case 'moving-to-location':
                 __services.SpriteService.drawSprite(context, this._animators[this._path.direction].value(), this._path.location);
                 break;
             
@@ -183,6 +250,11 @@ export class Girl implements IDrawable {
         const attackPosition = this._currTarget.location.move(this._currAttackPlan.locationOffsetX, this._currAttackPlan.locationOffsetY);
         this._path = __services.PathFindingService.calculatePath(this._path.location, attackPosition, Girl._relativeBoundingRect);
         this._state = 'moving';
+    }
+
+    private _setPathToLocation(location: Coords) {
+        this._path = __services.PathFindingService.calculatePath(this._path.location, location, Girl._relativeBoundingRect);
+        this._state = 'moving-to-location';
     }
     
     private _setPathToLeaveHome() {
