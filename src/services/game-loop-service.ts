@@ -19,15 +19,11 @@ export class GameLoopService {
                 const _callback = (hrts: number) => { callback(hrts); requestAnimationFrame(_callback); }
                 _callback(0);
             }
-        } else if (window.webkitRequestAnimationFrame) {
-            this._frameFn = (callback: (ts:number) => void) => {
-                const _callback = (hrts: number) => { callback(hrts); webkitRequestAnimationFrame(_callback); }
-                _callback(0);
-            };
         } else {
+            // Fallback for browsers without requestAnimationFrame
             this._frameFn = (callback: (ts:number) => void) => {
                 let fps = -1;
-                let h_interval = 0;
+                let h_interval: number = 0;
                 let intervalFn = () => { 
                     if (GameSettings.FPS !== fps) {
                         if (h_interval) {
@@ -35,7 +31,7 @@ export class GameLoopService {
                         }
 
                         fps = GameSettings.FPS;
-                        h_interval = setInterval(intervalFn, 1000/fps);
+                        h_interval = window.setInterval(intervalFn, 1000/fps);
                         return;
                     }
 
