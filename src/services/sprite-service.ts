@@ -194,9 +194,9 @@ export class SpriteService {
             'rose': new SpriteAnimation('flower', '2:rose,r0,rose,r1', true),
             'steam-1': new SpriteAnimation('steam-1', '00,01,02,03,04,05,06', false),
             'steam-2': new SpriteAnimation('steam-2', '00,01,02,03,04', false),
-            'girl-attacking-1': new SpriteAnimation('girl-attack-1', '00,01,02,hit,00', true),
-            'girl-attacking-2': new SpriteAnimation('girl-attack-2', '00,01,02,hit,00', true),
-            'girl-attacking-3': new SpriteAnimation('girl-attack-3', '00,01,hit,02,00', true),
+            'girl-attacking-1': new SpriteAnimation('girl-attack-1', '00,01,02,hit,00', false),
+            'girl-attacking-2': new SpriteAnimation('girl-attack-2', '00,01,02,hit,00', false),
+            'girl-attacking-3': new SpriteAnimation('girl-attack-3', '00,01,hit,02,00', false),
             'girl-attacking-4': new SpriteAnimation('girl-attack-4', '00,01,02,03,04,hit,05,06,07,08,09,10,11,12,13,14', false)
         };
 
@@ -223,7 +223,10 @@ export class SpriteService {
     })();
 
     drawSprite(context: DrawContext, key: string, location: Coords) {
-
+        if (!location) {
+            return;
+        }
+        
         const sprite = this.getSprite(key);
         if (sprite == null) {
             return;

@@ -11,6 +11,7 @@ export class GameLoopService {
     private _drawFn: (context: DrawContext) => void = null;
     private _ticker: number = 0;
     private _clicks: Coords[] = [];
+    private _pressedKeys: Set<string> = new Set();
     private _statsDiv: StatsDiv;
 
     constructor(private _viewport: ViewportService) {
@@ -61,7 +62,9 @@ export class GameLoopService {
         this._statsDiv = new StatsDiv(null);
 
         if (!this._started && this._updateFn && this._drawFn) {
-            document.getElementById('viewport').addEventListener('click', this.getClick.bind(this))
+            document.getElementById('viewport').addEventListener('click', this.getClick.bind(this));
+            document.addEventListener('keydown', this.onKeyDown.bind(this));
+            document.addEventListener('keyup', this.onKeyUp.bind(this));
             this._frameFn(this.run.bind(this));
             this._started = true;
         }
@@ -86,7 +89,8 @@ export class GameLoopService {
             if (this._updateFn) {
                 const clicks = this._clicks;
                 this._clicks = [];
-                const updateContext = new UpdateContext(this._ticker, clicks);
+                const pressedKeys = Array.from(this._pressedKeys);
+                const updateContext = new UpdateContext(this._ticker, clicks, pressedKeys);
                 this._updateFn(updateContext);
             }
         
@@ -141,14 +145,27 @@ export class GameLoopService {
 
         this._clicks.push(this._viewport.translate(event.clientX + xOffset, event.clientY + yOffset));
     }
+
+    private onKeyDown(event: KeyboardEvent) {
+        // Track WASD keys and space for attack
+        if (['w', 'a', 's', 'd', ' '].includes(event.key.toLowerCase())) {
+            this._pressedKeys.add(event.key.toLowerCase());
+            event.preventDefault(); // Prevent page scrolling
+        }
+    }
+
+    private onKeyUp(event: KeyboardEvent) {
+        this._pressedKeys.delete(event.key.toLowerCase());
+    }
 }
 
 export class UpdateContext {
 
     public get tick(): number { return this._tick; }
     public get locations(): Coords[] { return this._locations; }
+    public get pressedKeys(): string[] { return this._pressedKeys; }
 
-    constructor(private _tick: number, private _locations: Coords[]) { }
+    constructor(private _tick: number, private _locations: Coords[], private _pressedKeys: string[]) { }
 }
 
 export class DrawContext {
